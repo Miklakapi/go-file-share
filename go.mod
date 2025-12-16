@@ -1,4 +1,4 @@
-module go-file-share
+module github.com/Miklakapi/go-file-share
 
 go 1.25.1
 

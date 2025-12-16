@@ -1,4 +1,4 @@
-# Go-FileShare
+# Go-File-Share
 
 ![license](https://img.shields.io/badge/license-MIT-blue)
 ![linux](https://img.shields.io/badge/os-Linux-green)
