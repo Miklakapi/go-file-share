@@ -1,0 +1,4 @@
+go-file-share
+node_modules
+*.exe
+uploads
