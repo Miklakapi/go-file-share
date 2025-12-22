@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/rand"
 	"fmt"
 	"os"
 	"time"
@@ -13,6 +14,7 @@ type Config struct {
 	DefaultRoomTTL time.Duration
 	TokenTTL       time.Duration
 	Mode           string
+	JWTSecret      []byte
 }
 
 func Load() (Config, error) {
@@ -38,6 +40,11 @@ func Load() (Config, error) {
 		return cfg, fmt.Errorf("invalid TOKEN_TTL: %w", err)
 	}
 	cfg.TokenTTL = tokenTTL
+	secret := make([]byte, 32)
+	if _, err := rand.Read(secret); err != nil {
+		return cfg, fmt.Errorf("cannot generate jwt secret: %w", err)
+	}
+	cfg.JWTSecret = secret
 
 	return cfg, nil
 }
