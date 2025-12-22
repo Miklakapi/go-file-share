@@ -1,88 +1,65 @@
 package main
 
 import (
+	"context"
+	"log"
 	"net/http"
-	"strconv"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
+	"github.com/Miklakapi/go-file-share/internal/api"
+	"github.com/Miklakapi/go-file-share/internal/api/handlers"
+	"github.com/Miklakapi/go-file-share/internal/app"
+	"github.com/Miklakapi/go-file-share/internal/config"
 	"github.com/Miklakapi/go-file-share/internal/files"
-
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	engine := gin.Default()
+	appCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	config, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fileHub := files.NewFileHub()
-	fileHub.Run()
+	go fileHub.Run(appCtx)
 
-	engine.GET("/ping", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
+	deps := app.NewDependencyBag(config, fileHub, appCtx)
+
+	engine := gin.New()
+	engine.Use(gin.Logger(), gin.Recovery())
+
+	api.RegisterRoutes(engine, deps, &api.Handlers{
+		HealthHandler: handlers.NewHealthHandler(deps),
+		PagesHandler:  handlers.NewPagesHandler(deps),
 	})
 
-	engine.GET("/", func(ctx *gin.Context) {
-		// HTML
-	})
-	engine.GET("/rooms", func(ctx *gin.Context) {
-		// List of rooms
-	})
-	engine.GET("/rooms/:uuid", func(ctx *gin.Context) {
-		// Room by uuid
-	})
-	engine.POST("/rooms", func(ctx *gin.Context) {
-		password := ctx.PostForm("password")
-		lifespanStr := ctx.PostForm("lifespan")
+	srv := &http.Server{
+		Addr:    ":" + config.Port,
+		Handler: engine,
+	}
 
-		if password == "" {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Missing field: 'password'"})
-			return
+	go func() {
+		log.Println("HTTP server started on :" + config.Port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen error: %v", err)
 		}
-		lifespanSec := 3600
-		if lifespanStr != "" {
-			lifespanSec, err := strconv.Atoi(lifespanStr)
-			if err != nil || lifespanSec <= 0 {
-				ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid 'lifespan' (expected positive integer seconds)"})
-				return
-			}
-		}
+	}()
 
-		newFileContainer := files.NewFileContainer(password, lifespanSec, fileHub)
-		fileHub.Register <- newFileContainer
-		ctx.JSON(http.StatusOK, gin.H{"ok": true})
-	})
-	engine.POST("/rooms/:uuid/auth", func(ctx *gin.Context) {
-		// auth
-	})
-	engine.POST("/rooms/:uuid/auth/logout", func(ctx *gin.Context) {
-		// logout
-	})
-	engine.DELETE("/rooms/:uuid", func(ctx *gin.Context) {
-		// delete room
-	})
-	// File upload
-	// POST /rooms/:uuid/files
-	// Batch file upload
-	// POST /rooms/:uuid/files/batch
-	// List of files
-	// GET /rooms/:uuid/files
-	// Single file data
-	// GET /rooms/:uuid/files/:fileId
-	// Download file
-	// GET /rooms/:uuid/files/:fileId/download
-	// Remve file
-	// DELETE /rooms/:uuid/files/:fileId
+	<-appCtx.Done()
+	log.Println("shutdown signal received")
 
-	// engine.POST("/upload", func(ctx *gin.Context) {
-	// 	file, err := ctx.FormFile("file")
-	// 	if err != nil {
-	// 		ctx.JSON(http.StatusBadRequest, gin.H{
-	// 			"error": "Missing file: expected field 'file'",
-	// 		})
-	// 		return
-	// 	}
-	// 	newFileContainer := files.NewFileContainer(password, lifespanSec, fileHub)
-	// 	fileHub.Register <- newFileContainer
-	// 	ctx.JSON(http.StatusOK, gin.H{"ok": true})
-	// })
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Printf("server shutdown error: %v", err)
+	}
+
+	log.Println("server stopped gracefully")
 }
