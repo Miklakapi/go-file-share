@@ -1,41 +1,38 @@
 package files
 
 import (
-	"mime/multipart"
+	"os"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type FileRoom struct {
-	Id         uuid.UUID
-	password   string ``
+	UUID       uuid.UUID
+	ExpiresAt  time.Time
 	FilePaths  []string
-	Lifespan   *time.Ticker
-	FileHub    *FileHub
-	AddFile    chan []*multipart.FileHeader
-	RemoveFile chan []*multipart.FileHeader
+	tokens     []string
+	password   string
+	deleteOnce sync.Once
 }
 
-func NewFileContainer(password string, lifespan int, fileHub *FileHub) *FileRoom {
-	fileContainre := &FileRoom{
-		Id:         uuid.New(),
-		password:   password,
-		FilePaths:  make([]string, 0),
-		Lifespan:   time.NewTicker(time.Duration(lifespan)),
-		FileHub:    fileHub,
-		AddFile:    make(chan []*multipart.FileHeader),
-		RemoveFile: make(chan []*multipart.FileHeader),
+func NewFileRoom(password string, lifespanSec int) *FileRoom {
+	fileRoom := &FileRoom{
+		UUID:      uuid.New(),
+		password:  password,
+		FilePaths: make([]string, 0),
+		ExpiresAt: time.Now().Add(time.Second * time.Duration(lifespanSec)),
 	}
-	go fileContainre.run()
-	return fileContainre
+	return fileRoom
 }
 
-func (fC *FileRoom) run() {
-	defer func() {
-		fC.Lifespan.Stop()
-		fC.FileHub.Unregister <- fC
-
-	}()
-	<-fC.Lifespan.C
+func (fR *FileRoom) Delete() {
+	fR.deleteOnce.Do(func() {
+		for _, path := range fR.FilePaths {
+			os.Remove(path)
+		}
+		fR.FilePaths = nil
+		fR.tokens = nil
+	})
 }
