@@ -4,19 +4,38 @@ import (
 	"context"
 
 	"github.com/Miklakapi/go-file-share/internal/config"
-	"github.com/Miklakapi/go-file-share/internal/files"
+	fileShareService "github.com/Miklakapi/go-file-share/internal/file-share/application"
+	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 )
 
 type DependencyBag struct {
-	Config     config.Config
-	FileHub    *files.FileHub
 	AppContext context.Context
+	Config     config.Config
+
+	RoomRepo  ports.RoomRepository
+	FileStore ports.FileStore
+	Hasher    ports.PasswordHasher
+
+	FileShareService *fileShareService.Service
 }
 
-func NewDependencyBag(config config.Config, fileHub *files.FileHub, appContext context.Context) *DependencyBag {
+func NewDependencyBag(
+	appContext context.Context,
+	config config.Config,
+	roomRepo ports.RoomRepository,
+	fileStore ports.FileStore,
+	hasher ports.PasswordHasher,
+) *DependencyBag {
+	fileShareService := fileShareService.NewService(roomRepo, fileStore, hasher)
+
 	return &DependencyBag{
-		Config:     config,
-		FileHub:    fileHub,
 		AppContext: appContext,
+		Config:     config,
+
+		RoomRepo:  roomRepo,
+		FileStore: fileStore,
+		Hasher:    hasher,
+
+		FileShareService: fileShareService,
 	}
 }

@@ -13,7 +13,9 @@ import (
 	"github.com/Miklakapi/go-file-share/internal/api/handlers"
 	"github.com/Miklakapi/go-file-share/internal/app"
 	"github.com/Miklakapi/go-file-share/internal/config"
-	"github.com/Miklakapi/go-file-share/internal/files"
+	filestore "github.com/Miklakapi/go-file-share/internal/file-share/adapters/file-store"
+	roomrepository "github.com/Miklakapi/go-file-share/internal/file-share/adapters/room-repository"
+	"github.com/Miklakapi/go-file-share/internal/file-share/adapters/security"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,10 +28,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fileHub := files.NewFileHub()
-	go fileHub.Run(appCtx)
+	roomRepo := roomrepository.NewMemoryRepo()
+	fileStore := filestore.DiskStore{}
+	hasher := security.BcryptHasher{Cost: 14}
 
-	deps := app.NewDependencyBag(config, fileHub, appCtx)
+	deps := app.NewDependencyBag(appCtx, config, roomRepo, fileStore, hasher)
 
 	engine := gin.New()
 	engine.Use(gin.Logger(), gin.Recovery())
@@ -37,6 +40,9 @@ func main() {
 	api.RegisterRoutes(engine, deps, &api.Handlers{
 		HealthHandler: handlers.NewHealthHandler(deps),
 		PagesHandler:  handlers.NewPagesHandler(deps),
+		RoomsHandler:  handlers.NewRoomsHandler(deps),
+		AuthHandler:   handlers.NewAuthHandler(deps),
+		FilesHandler:  handlers.NewFilesHandler(deps),
 	})
 
 	srv := &http.Server{
