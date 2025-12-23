@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/Miklakapi/go-file-share/internal/app"
-	"github.com/Miklakapi/go-file-share/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,7 +23,7 @@ func AuthMiddleware(deps *app.DependencyBag) gin.HandlerFunc {
 			return
 		}
 
-		if err := utils.ValidateJWT(token, deps.Config.JWTSecret); err != nil {
+		if err := deps.TokenService.Validate(deps.AppContext, token); err != nil {
 			www, msg := mapJWTError(err)
 			abortUnauthorized(ctx, www, msg)
 			return

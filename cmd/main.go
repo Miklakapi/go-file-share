@@ -31,8 +31,9 @@ func main() {
 	roomRepo := roomrepository.NewMemoryRepo()
 	fileStore := filestore.DiskStore{}
 	hasher := security.BcryptHasher{Cost: 14}
+	tokenService := security.NewJwtService(config.JWTSecret)
 
-	deps := app.NewDependencyBag(appCtx, config, roomRepo, fileStore, hasher)
+	deps := app.NewDependencyBag(appCtx, config, roomRepo, fileStore, hasher, tokenService)
 
 	engine := gin.New()
 	engine.Use(gin.Logger(), gin.Recovery())
