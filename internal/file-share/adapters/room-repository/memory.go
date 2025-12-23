@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Miklakapi/go-file-share/internal/file-share/adapters"
 	"github.com/Miklakapi/go-file-share/internal/file-share/domain"
 	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 	"github.com/google/uuid"
@@ -76,7 +75,7 @@ func (r *MemoryRepo) Create(ctx context.Context, room *domain.FileRoom) error {
 	defer r.mu.Unlock()
 
 	if _, ok := r.rooms[room.ID]; ok {
-		return adapters.ErrRoomAlreadyExists
+		return ports.ErrRoomAlreadyExists
 	}
 
 	r.rooms[room.ID] = cloneRoom(room)
@@ -95,7 +94,7 @@ func (r *MemoryRepo) Update(ctx context.Context, room *domain.FileRoom) error {
 	defer r.mu.Unlock()
 
 	if _, ok := r.rooms[room.ID]; !ok {
-		return adapters.ErrRoomNotFound
+		return ports.ErrRoomNotFound
 	}
 
 	r.rooms[room.ID] = cloneRoom(room)
@@ -111,7 +110,7 @@ func (r *MemoryRepo) Delete(ctx context.Context, roomID uuid.UUID) error {
 	defer r.mu.Unlock()
 
 	if _, ok := r.rooms[roomID]; !ok {
-		return adapters.ErrRoomNotFound
+		return ports.ErrRoomNotFound
 	}
 
 	delete(r.rooms, roomID)

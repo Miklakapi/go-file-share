@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Miklakapi/go-file-share/internal/file-share/adapters"
 	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 )
 
@@ -23,16 +22,16 @@ func (DiskStore) Save(ctx context.Context, uploadDir, name string, r io.Reader) 
 
 	uploadDir = strings.TrimSpace(uploadDir)
 	if uploadDir == "" {
-		return "", 0, adapters.ErrEmptyUploadDir
+		return "", 0, ports.ErrEmptyUploadDir
 	}
 
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return "", 0, adapters.ErrEmptyFilename
+		return "", 0, ports.ErrEmptyFilename
 	}
 
 	if r == nil {
-		return "", 0, adapters.ErrNilReader
+		return "", 0, ports.ErrNilReader
 	}
 
 	safeName := filepath.Base(name)
