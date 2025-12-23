@@ -17,14 +17,14 @@ type FileRoom struct {
 	deleteOnce sync.Once
 }
 
-func NewFileRoom(hashedPassword string, creatorToken string, lifespanSec int) (*FileRoom, error) {
+func NewFileRoom(hashedPassword string, creatorToken string, lifespan time.Duration) (*FileRoom, error) {
 	if hashedPassword == "" {
 		return nil, ErrEmptyPasswordHash
 	}
 	if creatorToken == "" {
 		return nil, ErrEmptyCreatorToken
 	}
-	if lifespanSec <= 0 {
+	if lifespan <= 0 {
 		return nil, ErrInvalidRoomTTL
 	}
 
@@ -32,7 +32,7 @@ func NewFileRoom(hashedPassword string, creatorToken string, lifespanSec int) (*
 
 	r := &FileRoom{
 		ID:        uuid.New(),
-		ExpiresAt: now.Add(time.Second * time.Duration(lifespanSec)),
+		ExpiresAt: now.Add(lifespan),
 		Files:     make(map[uuid.UUID]*FileRoomFile),
 		tokens:    make(map[string]bool),
 		password:  hashedPassword,
