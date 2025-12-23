@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/Miklakapi/go-file-share/internal/config"
-	fileShareService "github.com/Miklakapi/go-file-share/internal/file-share/application"
+	fileShare "github.com/Miklakapi/go-file-share/internal/file-share/application"
 	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 )
 
@@ -12,11 +12,12 @@ type DependencyBag struct {
 	AppContext context.Context
 	Config     config.Config
 
-	RoomRepo  ports.RoomRepository
-	FileStore ports.FileStore
-	Hasher    ports.PasswordHasher
+	RoomRepo     ports.RoomRepository
+	FileStore    ports.FileStore
+	Hasher       ports.PasswordHasher
+	TokenService ports.TokenService
 
-	FileShareService *fileShareService.Service
+	FileShareService *fileShare.Service
 }
 
 func NewDependencyBag(
@@ -25,16 +26,28 @@ func NewDependencyBag(
 	roomRepo ports.RoomRepository,
 	fileStore ports.FileStore,
 	hasher ports.PasswordHasher,
+	tokenService ports.TokenService,
 ) *DependencyBag {
-	fileShareService := fileShareService.NewService(roomRepo, fileStore, hasher)
+	fileShareSettings := fileShare.NewSettings(
+		config.DefaultRoomTTL,
+		config.TokenTTL,
+		config.MaxFiles,
+		config.MaxRoomBytes,
+		config.MaxRoomLifespan,
+		config.MaxTokenLifespan,
+		config.CleanupInterval,
+	)
+
+	fileShareService := fileShare.NewService(roomRepo, fileStore, hasher, tokenService, fileShareSettings)
 
 	return &DependencyBag{
 		AppContext: appContext,
 		Config:     config,
 
-		RoomRepo:  roomRepo,
-		FileStore: fileStore,
-		Hasher:    hasher,
+		RoomRepo:     roomRepo,
+		FileStore:    fileStore,
+		Hasher:       hasher,
+		TokenService: tokenService,
 
 		FileShareService: fileShareService,
 	}
