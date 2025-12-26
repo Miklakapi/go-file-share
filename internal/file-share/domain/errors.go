@@ -15,4 +15,5 @@ var (
 	ErrInvalidFile  = errors.New("invalid file")
 
 	ErrRoomLifespanTooLong = errors.New("room lifespan too long")
+	ErrRoomNotFound        = errors.New("room not found")
 )

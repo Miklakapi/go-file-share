@@ -17,12 +17,9 @@ type FileRoom struct {
 	deleteOnce sync.Once
 }
 
-func NewFileRoom(hashedPassword string, creatorToken string, lifespan time.Duration) (*FileRoom, error) {
+func NewFileRoom(hashedPassword string, lifespan time.Duration) (*FileRoom, error) {
 	if hashedPassword == "" {
 		return nil, ErrEmptyPasswordHash
-	}
-	if creatorToken == "" {
-		return nil, ErrEmptyCreatorToken
 	}
 	if lifespan <= 0 {
 		return nil, ErrInvalidRoomTTL
@@ -38,7 +35,6 @@ func NewFileRoom(hashedPassword string, creatorToken string, lifespan time.Durat
 		password:  hashedPassword,
 	}
 
-	r.tokens[creatorToken] = true
 	return r, nil
 }
 

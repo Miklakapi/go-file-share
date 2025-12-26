@@ -12,3 +12,8 @@ type RoomSnapshot struct {
 	Files     int
 	Tokens    int
 }
+
+type ExpiredCleanup struct {
+	RoomID uuid.UUID
+	Paths  []string
+}
