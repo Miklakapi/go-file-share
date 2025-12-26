@@ -6,7 +6,7 @@ import (
 
 type Settings struct {
 	DefaultRoomTTL   time.Duration
-	TokenTTL         time.Duration
+	DefaultTokenTTL  time.Duration
 	MaxFiles         int
 	MaxRoomBytes     int64
 	MaxRoomLifespan  time.Duration
@@ -16,7 +16,7 @@ type Settings struct {
 
 func NewSettings(
 	defaultRoomTTL time.Duration,
-	tokenTTL time.Duration,
+	defaultTokenTTL time.Duration,
 	maxFiles int,
 	maxRoomBytes int64,
 	maxRoomLifespan time.Duration,
@@ -25,7 +25,7 @@ func NewSettings(
 ) Settings {
 	return Settings{
 		DefaultRoomTTL:   defaultRoomTTL,
-		TokenTTL:         tokenTTL,
+		DefaultTokenTTL:  defaultTokenTTL,
 		MaxFiles:         maxFiles,
 		MaxRoomBytes:     maxRoomBytes,
 		MaxRoomLifespan:  maxRoomLifespan,

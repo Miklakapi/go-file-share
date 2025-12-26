@@ -225,6 +225,42 @@ func (r *MemoryRepo) RemoveToken(ctx context.Context, roomID uuid.UUID, token st
 	return true, nil
 }
 
+func (r *MemoryRepo) GetPasswordHash(ctx context.Context, roomID uuid.UUID) (hash string, ok bool, err error) {
+	if err := ctx.Err(); err != nil {
+		return "", false, err
+	}
+
+	r.mu.RLock()
+	room, ok := r.rooms[roomID]
+	r.mu.RUnlock()
+
+	if !ok || room == nil {
+		return "", false, nil
+	}
+
+	return room.Password(), true, nil
+}
+
+func (r *MemoryRepo) AddToken(ctx context.Context, roomID uuid.UUID, token string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	if token == "" {
+		return domain.ErrEmptyToken
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	room, ok := r.rooms[roomID]
+	if !ok || room == nil {
+		return ports.ErrRoomNotFound
+	}
+
+	return room.AddToken(token)
+}
+
 func cloneRoom(src *domain.FileRoom) *domain.FileRoom {
 	if src == nil {
 		return nil

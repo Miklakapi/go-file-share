@@ -52,3 +52,11 @@ func (r *SqliteRepo) DeleteExpired(ctx context.Context, now time.Time) ([]domain
 func (r *SqliteRepo) RemoveToken(ctx context.Context, roomID uuid.UUID, token string) (bool, error) {
 	panic("TODO")
 }
+
+func (r *SqliteRepo) GetPasswordHash(ctx context.Context, roomID uuid.UUID) (hash string, ok bool, err error) {
+	panic("TODO")
+}
+
+func (r *SqliteRepo) AddToken(ctx context.Context, roomID uuid.UUID, token string) error {
+	panic("TODO")
+}

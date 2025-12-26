@@ -147,7 +147,7 @@ func (s *Service) DeleteRoom(ctx context.Context, id uuid.UUID, token string) er
 	return joined
 }
 
-func (s *Service) AuthRoom(ctx context.Context, id uuid.UUID, password string) (token string, expiresAt time.Time, err error) {
+func (s *Service) AuthRoom(ctx context.Context, id uuid.UUID, password string, lifespan time.Duration) (token string, expiresAt time.Time, err error) {
 	if err := ctx.Err(); err != nil {
 		return "", time.Time{}, err
 	}
@@ -157,7 +157,35 @@ func (s *Service) AuthRoom(ctx context.Context, id uuid.UUID, password string) (
 		return "", time.Time{}, domain.ErrEmptyPassword
 	}
 
-	panic("TODO")
+	if lifespan <= 0 {
+		lifespan = s.settings.DefaultTokenTTL
+	}
+	if s.settings.MaxTokenLifespan > 0 && lifespan > s.settings.MaxTokenLifespan {
+		return "", time.Time{}, domain.ErrTokenLifespanTooLong
+	}
+
+	hash, ok, err := s.rooms.GetPasswordHash(ctx, id)
+	if err != nil {
+		return "", time.Time{}, err
+	}
+	if !ok || hash == "" {
+		return "", time.Time{}, domain.ErrRoomNotFound
+	}
+
+	if !s.hasher.Verify(password, hash) {
+		return "", time.Time{}, domain.ErrInvalidPassword
+	}
+
+	token, expiresAt, err = s.tokenIssuer.Issue(ctx, id, lifespan)
+	if err != nil {
+		return "", time.Time{}, err
+	}
+
+	if err := s.rooms.AddToken(ctx, id, token); err != nil {
+		return "", time.Time{}, err
+	}
+
+	return token, expiresAt, nil
 }
 
 func (s *Service) LogoutRoom(ctx context.Context, id uuid.UUID, token string) error {

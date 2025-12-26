@@ -52,3 +52,11 @@ func (r *RedisRepo) DeleteExpired(ctx context.Context, now time.Time) ([]domain.
 func (r *RedisRepo) RemoveToken(ctx context.Context, roomID uuid.UUID, token string) (bool, error) {
 	panic("TODO")
 }
+
+func (r *RedisRepo) GetPasswordHash(ctx context.Context, roomID uuid.UUID) (hash string, ok bool, err error) {
+	panic("TODO")
+}
+
+func (r *RedisRepo) AddToken(ctx context.Context, roomID uuid.UUID, token string) error {
+	panic("TODO")
+}
