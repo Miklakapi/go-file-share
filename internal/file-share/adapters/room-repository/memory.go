@@ -2,6 +2,7 @@ package roomrepository
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"time"
 
@@ -33,6 +34,30 @@ func (r *MemoryRepo) Get(ctx context.Context, roomID uuid.UUID) (*domain.FileRoo
 	r.mu.RUnlock()
 
 	if !ok || room == nil {
+		return nil, false, nil
+	}
+
+	return cloneRoom(room), true, nil
+}
+
+func (r *MemoryRepo) GetByToken(ctx context.Context, roomID uuid.UUID, token string) (*domain.FileRoom, bool, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, false, err
+	}
+
+	if token == "" {
+		return nil, false, nil
+	}
+
+	r.mu.RLock()
+	room, ok := r.rooms[roomID]
+	r.mu.RUnlock()
+
+	if !ok || room == nil {
+		return nil, false, nil
+	}
+
+	if !room.HasToken(token) {
 		return nil, false, nil
 	}
 
@@ -78,7 +103,7 @@ func (r *MemoryRepo) Create(ctx context.Context, room *domain.FileRoom) error {
 		return ports.ErrRoomAlreadyExists
 	}
 
-	r.rooms[room.ID] = cloneRoom(room)
+	r.rooms[room.ID] = room.Clone()
 	return nil
 }
 
@@ -97,27 +122,11 @@ func (r *MemoryRepo) Update(ctx context.Context, room *domain.FileRoom) error {
 		return ports.ErrRoomNotFound
 	}
 
-	r.rooms[room.ID] = cloneRoom(room)
+	r.rooms[room.ID] = room.Clone()
 	return nil
 }
 
-func (r *MemoryRepo) Delete(ctx context.Context, roomID uuid.UUID) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if _, ok := r.rooms[roomID]; !ok {
-		return ports.ErrRoomNotFound
-	}
-
-	delete(r.rooms, roomID)
-	return nil
-}
-
-func (r *MemoryRepo) DeleteExpired(ctx context.Context, now time.Time) ([]uuid.UUID, error) {
+func (r *MemoryRepo) Delete(ctx context.Context, roomID uuid.UUID) ([]string, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -125,15 +134,96 @@ func (r *MemoryRepo) DeleteExpired(ctx context.Context, now time.Time) ([]uuid.U
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	var deleted []uuid.UUID
-	for id, room := range r.rooms {
-		if room == nil || now.After(room.ExpiresAt) {
-			delete(r.rooms, id)
-			deleted = append(deleted, id)
+	room, ok := r.rooms[roomID]
+	if !ok {
+		return nil, ports.ErrRoomNotFound
+	}
+
+	paths := make([]string, 0)
+	if room != nil {
+		paths = make([]string, 0, len(room.Files))
+		for _, f := range room.Files {
+			if f == nil {
+				continue
+			}
+			if p := strings.TrimSpace(f.Path); p != "" {
+				paths = append(paths, p)
+			}
 		}
 	}
 
-	return deleted, nil
+	delete(r.rooms, roomID)
+	return paths, nil
+}
+
+func (r *MemoryRepo) DeleteExpired(ctx context.Context, now time.Time) ([]domain.ExpiredCleanup, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	out := make([]domain.ExpiredCleanup, 0)
+	for id, room := range r.rooms {
+		if room == nil {
+			delete(r.rooms, id)
+			out = append(out, domain.ExpiredCleanup{
+				RoomID: id,
+				Paths:  nil,
+			})
+			continue
+		}
+
+		if !now.After(room.ExpiresAt) {
+			continue
+		}
+
+		paths := make([]string, 0, len(room.Files))
+		for _, f := range room.Files {
+			if f == nil {
+				continue
+			}
+			if p := strings.TrimSpace(f.Path); p != "" {
+				paths = append(paths, p)
+			}
+		}
+
+		delete(r.rooms, id)
+		out = append(out, domain.ExpiredCleanup{
+			RoomID: id,
+			Paths:  paths,
+		})
+	}
+
+	return out, nil
+}
+
+func (r *MemoryRepo) RemoveToken(ctx context.Context, roomID uuid.UUID, token string) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+	if token == "" {
+		return false, nil
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	room, ok := r.rooms[roomID]
+	if !ok || room == nil {
+		return false, nil
+	}
+
+	if !room.HasToken(token) {
+		return false, nil
+	}
+
+	if err := room.RemoveToken(token); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func cloneRoom(src *domain.FileRoom) *domain.FileRoom {

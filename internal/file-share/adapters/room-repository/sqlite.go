@@ -25,6 +25,10 @@ func (r *SqliteRepo) Get(ctx context.Context, roomID uuid.UUID) (*domain.FileRoo
 	panic("TODO")
 }
 
+func (r *SqliteRepo) GetByToken(ctx context.Context, roomID uuid.UUID, token string) (*domain.FileRoom, bool, error) {
+	panic("TODO")
+}
+
 func (r *SqliteRepo) ListSnapshots(ctx context.Context) ([]domain.RoomSnapshot, error) {
 	panic("TODO")
 }
@@ -37,10 +41,14 @@ func (r *SqliteRepo) Update(ctx context.Context, room *domain.FileRoom) error {
 	panic("TODO")
 }
 
-func (r *SqliteRepo) Delete(ctx context.Context, roomID uuid.UUID) error {
+func (r *SqliteRepo) Delete(ctx context.Context, roomID uuid.UUID) ([]string, error) {
 	panic("TODO")
 }
 
-func (r *SqliteRepo) DeleteExpired(ctx context.Context, now time.Time) ([]uuid.UUID, error) {
+func (r *SqliteRepo) DeleteExpired(ctx context.Context, now time.Time) ([]domain.ExpiredCleanup, error) {
+	panic("TODO")
+}
+
+func (r *SqliteRepo) RemoveToken(ctx context.Context, roomID uuid.UUID, token string) (bool, error) {
 	panic("TODO")
 }

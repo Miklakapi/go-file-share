@@ -25,6 +25,10 @@ func (r *RedisRepo) Get(ctx context.Context, roomID uuid.UUID) (*domain.FileRoom
 	panic("TODO")
 }
 
+func (r *RedisRepo) GetByToken(ctx context.Context, roomID uuid.UUID, token string) (*domain.FileRoom, bool, error) {
+	panic("TODO")
+}
+
 func (r *RedisRepo) ListSnapshots(ctx context.Context) ([]domain.RoomSnapshot, error) {
 	panic("TODO")
 }
@@ -37,10 +41,14 @@ func (r *RedisRepo) Update(ctx context.Context, room *domain.FileRoom) error {
 	panic("TODO")
 }
 
-func (r *RedisRepo) Delete(ctx context.Context, roomID uuid.UUID) error {
+func (r *RedisRepo) Delete(ctx context.Context, roomID uuid.UUID) ([]string, error) {
 	panic("TODO")
 }
 
-func (r *RedisRepo) DeleteExpired(ctx context.Context, now time.Time) ([]uuid.UUID, error) {
+func (r *RedisRepo) DeleteExpired(ctx context.Context, now time.Time) ([]domain.ExpiredCleanup, error) {
+	panic("TODO")
+}
+
+func (r *RedisRepo) RemoveToken(ctx context.Context, roomID uuid.UUID, token string) (bool, error) {
 	panic("TODO")
 }
