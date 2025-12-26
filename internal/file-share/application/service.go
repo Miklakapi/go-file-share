@@ -61,7 +61,7 @@ func (s *Service) Rooms(ctx context.Context) ([]domain.RoomSnapshot, error) {
 	return s.rooms.ListSnapshots(ctx)
 }
 
-func (s *Service) CreateRoom(ctx context.Context, password string, lifespan time.Duration) (domain.RoomSnapshot, string, error) {
+func (s *Service) CreateRoom(ctx context.Context, password string, lifespan time.Duration, roomID uuid.UUID) (domain.RoomSnapshot, string, error) {
 	if err := ctx.Err(); err != nil {
 		return domain.RoomSnapshot{}, "", err
 	}
@@ -83,7 +83,7 @@ func (s *Service) CreateRoom(ctx context.Context, password string, lifespan time
 		return domain.RoomSnapshot{}, "", err
 	}
 
-	token, _, err := s.tokenIssuer.Issue(ctx, lifespan)
+	token, _, err := s.tokenIssuer.Issue(ctx, roomID, lifespan)
 	if err != nil {
 		return domain.RoomSnapshot{}, "", err
 	}

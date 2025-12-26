@@ -8,6 +8,7 @@ import (
 
 	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type JwtService struct {
@@ -22,10 +23,11 @@ func NewJwtService(secret []byte) *JwtService {
 }
 
 type Claims struct {
+	RoomID string
 	jwt.RegisteredClaims
 }
 
-func (s *JwtService) Issue(ctx context.Context, ttl time.Duration) (string, time.Time, error) {
+func (s *JwtService) Issue(ctx context.Context, roomID uuid.UUID, ttl time.Duration) (string, time.Time, error) {
 	if err := ctx.Err(); err != nil {
 		return "", time.Time{}, err
 	}
@@ -34,6 +36,7 @@ func (s *JwtService) Issue(ctx context.Context, ttl time.Duration) (string, time
 	exp := now.Add(ttl)
 
 	claims := Claims{
+		RoomID: roomID.String(),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(exp),
 			IssuedAt:  jwt.NewNumericDate(now),
@@ -46,8 +49,26 @@ func (s *JwtService) Issue(ctx context.Context, ttl time.Duration) (string, time
 }
 
 func (s *JwtService) Validate(ctx context.Context, tokenString string) error {
-	if err := ctx.Err(); err != nil {
+	_, err := s.parseClaims(ctx, tokenString)
+	return err
+}
+
+func (s *JwtService) ValidateWithRoom(ctx context.Context, roomID uuid.UUID, tokenString string) error {
+	claims, err := s.parseClaims(ctx, tokenString)
+	if err != nil {
 		return err
+	}
+
+	if claims.RoomID != "" && claims.RoomID != roomID.String() {
+		return ports.ErrTokenRoomMismatch
+	}
+
+	return nil
+}
+
+func (s *JwtService) parseClaims(ctx context.Context, tokenString string) (*Claims, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 
 	claims := &Claims{}
@@ -61,15 +82,15 @@ func (s *JwtService) Validate(ctx context.Context, tokenString string) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, jwt.ErrTokenExpired):
-			return ports.ErrTokenExpired
+			return nil, ports.ErrTokenExpired
 		default:
-			return fmt.Errorf("%w: %v", ports.ErrTokenParse, err)
+			return nil, fmt.Errorf("%w: %v", ports.ErrTokenParse, err)
 		}
 	}
 
 	if parsed == nil || !parsed.Valid {
-		return ports.ErrInvalidToken
+		return nil, ports.ErrInvalidToken
 	}
 
-	return nil
+	return claims, nil
 }

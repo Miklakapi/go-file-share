@@ -19,28 +19,42 @@ func RegisterRoutes(router *gin.Engine, deps *app.DependencyBag, handlers *Handl
 	router.GET("/", handlers.PagesHandler.Index)
 	router.Static("/assets", deps.Config.PublicDir+"/assets")
 	router.StaticFile("/favicon.ico", deps.Config.PublicDir+"/favicon.ico")
+	router.NoRoute(handlers.PagesHandler.SPAFallback)
 
 	api := router.Group("/api/v1")
-	api.GET("/ping", handlers.HealthHandler.Ping)
-	api.GET("/health", handlers.HealthHandler.Health)
+	{
+		api.GET("/ping", handlers.HealthHandler.Ping)
+		api.GET("/health", handlers.HealthHandler.Health)
 
-	apiRooms := api.Group("/rooms")
-	apiRooms.GET("", handlers.RoomsHandler.Get)
-	apiRooms.GET("/:uuid", handlers.RoomsHandler.GetByUUID)
-	apiRooms.POST("", handlers.RoomsHandler.Create)
-	apiRooms.POST("/:uuid/auth", handlers.AuthHandler.Auth)
+		rooms := api.Group("/rooms")
+		{
+			rooms.GET("", handlers.RoomsHandler.Get)
+			rooms.POST("", handlers.RoomsHandler.Create)
 
-	secured := api.Group("", middleware.AuthMiddleware(deps))
+			room := rooms.Group("/:roomID", middleware.RoomIDParam())
+			{
+				room.GET("", handlers.RoomsHandler.GetByUUID)
+				room.POST("/auth", handlers.AuthHandler.Auth)
+			}
+		}
 
-	securedRooms := secured.Group("/rooms/:uuid")
-	securedRooms.DELETE("", handlers.RoomsHandler.Delete)
-	securedRooms.POST("/logout", handlers.AuthHandler.Logout)
-	securedRooms.GET("/files", handlers.FilesHandler.Get)
-	securedRooms.GET("/files/:fUuid", handlers.FilesHandler.GetByUUID)
-	securedRooms.GET("/files/:fUuid/download", handlers.FilesHandler.Download)
-	securedRooms.POST("/files", handlers.FilesHandler.Upload)
-	securedRooms.DELETE("/files/:fUuid", handlers.FilesHandler.Delete)
+		securedRooms := api.Group("/rooms/:roomID", middleware.RoomIDParam(), middleware.AuthMiddleware(deps))
+		{
+			securedRooms.DELETE("", handlers.RoomsHandler.Delete)
+			securedRooms.POST("/logout", handlers.AuthHandler.Logout)
 
-	// SPA Fallback
-	router.NoRoute(handlers.PagesHandler.SPAFallback)
+			files := securedRooms.Group("/files")
+			{
+				files.GET("", handlers.FilesHandler.Get)
+				files.POST("", handlers.FilesHandler.Upload)
+
+				file := files.Group("/:fileID", middleware.FileIDParam())
+				{
+					file.GET("", handlers.FilesHandler.GetByUUID)
+					file.GET("/download", handlers.FilesHandler.Download)
+					file.DELETE("", handlers.FilesHandler.Delete)
+				}
+			}
+		}
+	}
 }

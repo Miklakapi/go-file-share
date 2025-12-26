@@ -6,12 +6,19 @@ import (
 
 	"github.com/Miklakapi/go-file-share/internal/app"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func AuthMiddleware(deps *app.DependencyBag) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		raw, source := extractAuthToken(ctx)
+		roomIDAny, ok := ctx.Get(CtxRoomIDKey)
+		if !ok {
+			abortUnauthorized(ctx, `Bearer realm="api"`, "Unauthorized")
+			return
+		}
+		roomID := roomIDAny.(uuid.UUID)
 
+		raw, source := extractAuthToken(ctx)
 		if raw == "" {
 			abortUnauthorized(ctx, `Bearer realm="api"`, "Unauthorized: missing token")
 			return
@@ -23,7 +30,7 @@ func AuthMiddleware(deps *app.DependencyBag) gin.HandlerFunc {
 			return
 		}
 
-		if err := deps.TokenService.Validate(deps.AppContext, token); err != nil {
+		if err := deps.TokenService.ValidateWithRoom(deps.AppContext, roomID, token); err != nil {
 			www, msg := mapJWTError(err)
 			abortUnauthorized(ctx, www, msg)
 			return
