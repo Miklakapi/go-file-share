@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 )
@@ -20,12 +19,10 @@ func (DiskStore) Save(ctx context.Context, uploadDir, name string, r io.Reader) 
 		return "", 0, err
 	}
 
-	uploadDir = strings.TrimSpace(uploadDir)
 	if uploadDir == "" {
 		return "", 0, ports.ErrEmptyUploadDir
 	}
 
-	name = strings.TrimSpace(name)
 	if name == "" {
 		return "", 0, ports.ErrEmptyFilename
 	}
@@ -63,7 +60,6 @@ func (DiskStore) Open(ctx context.Context, path string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	path = strings.TrimSpace(path)
 	if path == "" {
 		return nil, os.ErrNotExist
 	}
@@ -76,7 +72,6 @@ func (DiskStore) Delete(ctx context.Context, path string) error {
 		return err
 	}
 
-	path = strings.TrimSpace(path)
 	if path == "" {
 		return nil
 	}

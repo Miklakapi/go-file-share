@@ -2,7 +2,6 @@ package roomrepository
 
 import (
 	"context"
-	"strings"
 	"sync"
 	"time"
 
@@ -146,8 +145,8 @@ func (r *MemoryRepo) Delete(ctx context.Context, roomID uuid.UUID) ([]string, er
 			if f == nil {
 				continue
 			}
-			if p := strings.TrimSpace(f.Path); p != "" {
-				paths = append(paths, p)
+			if f.Path != "" {
+				paths = append(paths, f.Path)
 			}
 		}
 	}
@@ -184,8 +183,8 @@ func (r *MemoryRepo) DeleteExpired(ctx context.Context, now time.Time) ([]domain
 			if f == nil {
 				continue
 			}
-			if p := strings.TrimSpace(f.Path); p != "" {
-				paths = append(paths, p)
+			if f.Path != "" {
+				paths = append(paths, f.Path)
 			}
 		}
 

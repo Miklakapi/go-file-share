@@ -2,7 +2,6 @@ package domain
 
 import (
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,9 +16,6 @@ type FileRoomFile struct {
 }
 
 func NewFileRoomFile(path, name string, size int64, now time.Time) (*FileRoomFile, error) {
-	path = strings.TrimSpace(path)
-	name = strings.TrimSpace(name)
-
 	if path == "" || name == "" || size <= 0 {
 		return nil, ErrInvalidFile
 	}

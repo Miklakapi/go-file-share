@@ -148,6 +148,15 @@ func (s *Service) DeleteRoom(ctx context.Context, id uuid.UUID, token string) er
 }
 
 func (s *Service) AuthRoom(ctx context.Context, id uuid.UUID, password string) (token string, expiresAt time.Time, err error) {
+	if err := ctx.Err(); err != nil {
+		return "", time.Time{}, err
+	}
+
+	password = strings.TrimSpace(password)
+	if password == "" {
+		return "", time.Time{}, domain.ErrEmptyPassword
+	}
+
 	panic("TODO")
 }
 
