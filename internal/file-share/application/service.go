@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -61,7 +62,7 @@ func (s *Service) Rooms(ctx context.Context) ([]domain.RoomSnapshot, error) {
 	return s.rooms.ListSnapshots(ctx)
 }
 
-func (s *Service) CreateRoom(ctx context.Context, password string, lifespan time.Duration, roomID uuid.UUID) (domain.RoomSnapshot, string, error) {
+func (s *Service) CreateRoom(ctx context.Context, password string, lifespan time.Duration) (domain.RoomSnapshot, string, error) {
 	if err := ctx.Err(); err != nil {
 		return domain.RoomSnapshot{}, "", err
 	}
@@ -83,13 +84,16 @@ func (s *Service) CreateRoom(ctx context.Context, password string, lifespan time
 		return domain.RoomSnapshot{}, "", err
 	}
 
-	token, _, err := s.tokenIssuer.Issue(ctx, roomID, lifespan)
+	room, err := domain.NewFileRoom(hashedPassword, lifespan)
 	if err != nil {
 		return domain.RoomSnapshot{}, "", err
 	}
 
-	room, err := domain.NewFileRoom(hashedPassword, token, lifespan)
+	token, _, err := s.tokenIssuer.Issue(ctx, room.ID, lifespan)
 	if err != nil {
+		return domain.RoomSnapshot{}, "", err
+	}
+	if err := room.AddToken(token); err != nil {
 		return domain.RoomSnapshot{}, "", err
 	}
 
@@ -100,19 +104,47 @@ func (s *Service) CreateRoom(ctx context.Context, password string, lifespan time
 	snap := domain.RoomSnapshot{
 		ID:        room.ID,
 		ExpiresAt: room.ExpiresAt,
-		Files:     len(room.Files),
-		Tokens:    room.TokensCount(),
+		Files:     0,
+		Tokens:    1,
 	}
 
 	return snap, token, nil
 }
 
-func (s *Service) DeleteRoom(ctx context.Context, id uuid.UUID) error {
+func (s *Service) DeleteRoom(ctx context.Context, id uuid.UUID, token string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
 
-	return s.rooms.Delete(ctx, id)
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return domain.ErrEmptyToken
+	}
+
+	room, ok, err := s.rooms.GetByToken(ctx, id, token)
+	if err != nil {
+		return err
+	}
+	if !ok || room == nil {
+		return domain.ErrRoomNotFound
+	}
+
+	paths, err := s.rooms.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	var joined error
+	for _, path := range paths {
+		if path == "" {
+			continue
+		}
+		if err := s.files.Delete(ctx, path); err != nil {
+			joined = errors.Join(joined, err)
+		}
+	}
+
+	return joined
 }
 
 func (s *Service) AuthRoom(ctx context.Context, id uuid.UUID, password string) (token string, expiresAt time.Time, err error) {
@@ -120,7 +152,24 @@ func (s *Service) AuthRoom(ctx context.Context, id uuid.UUID, password string) (
 }
 
 func (s *Service) LogoutRoom(ctx context.Context, id uuid.UUID, token string) error {
-	panic("TODO")
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return domain.ErrEmptyToken
+	}
+
+	ok, err := s.rooms.RemoveToken(ctx, id, token)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return domain.ErrTokenNotFound
+	}
+
+	return nil
 }
 
 func (s *Service) CleanupExpired(ctx context.Context) ([]uuid.UUID, error) {
@@ -128,5 +177,26 @@ func (s *Service) CleanupExpired(ctx context.Context) ([]uuid.UUID, error) {
 		return nil, err
 	}
 
-	return s.rooms.DeleteExpired(ctx, s.now())
+	expired, err := s.rooms.DeleteExpired(ctx, s.now())
+	if err != nil {
+		return nil, err
+	}
+
+	var deleted []uuid.UUID
+	var joined error
+
+	for _, item := range expired {
+		deleted = append(deleted, item.RoomID)
+
+		for _, path := range item.Paths {
+			if strings.TrimSpace(path) == "" {
+				continue
+			}
+			if err := s.files.Delete(ctx, path); err != nil {
+				joined = errors.Join(joined, err)
+			}
+		}
+	}
+
+	return deleted, joined
 }

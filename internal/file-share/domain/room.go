@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,9 +11,8 @@ type FileRoom struct {
 	ExpiresAt time.Time
 	Files     map[uuid.UUID]*FileRoomFile
 
-	tokens     map[string]bool
-	password   string
-	deleteOnce sync.Once
+	tokens   map[string]bool
+	password string
 }
 
 func NewFileRoom(hashedPassword string, lifespan time.Duration) (*FileRoom, error) {
@@ -127,16 +125,30 @@ func (r *FileRoom) IsExpired(now time.Time) bool {
 	return now.After(r.ExpiresAt)
 }
 
-func (r *FileRoom) Delete() (filesToCleanup []*FileRoomFile) {
-	r.deleteOnce.Do(func() {
-		for _, f := range r.Files {
-			filesToCleanup = append(filesToCleanup, f)
+func (r *FileRoom) Clone() *FileRoom {
+	if r == nil {
+		return nil
+	}
+
+	cp := &FileRoom{
+		ID:        r.ID,
+		ExpiresAt: r.ExpiresAt,
+		Files:     make(map[uuid.UUID]*FileRoomFile, len(r.Files)),
+		tokens:    make(map[string]bool, len(r.tokens)),
+		password:  r.password,
+	}
+
+	for id, f := range r.Files {
+		if f == nil {
+			continue
 		}
+		ff := *f
+		cp.Files[id] = &ff
+	}
 
-		r.Files = nil
-		r.tokens = nil
-		r.password = ""
-	})
+	for t := range r.tokens {
+		cp.tokens[t] = true
+	}
 
-	return filesToCleanup
+	return cp
 }
