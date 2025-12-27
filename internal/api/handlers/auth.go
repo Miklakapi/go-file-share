@@ -41,10 +41,7 @@ func (h *AuthHandler) Auth(ctx *gin.Context) {
 	}
 
 	cookiePath := strings.TrimSuffix(strings.TrimSuffix(ctx.Request.URL.Path, "/"), "/auth")
-	maxAge := int(time.Until(expiresAt).Seconds())
-	if maxAge < 0 {
-		maxAge = 0
-	}
+	maxAge := max(int(time.Until(expiresAt).Seconds()), 0)
 
 	ctx.SetSameSite(http.SameSiteStrictMode)
 	ctx.SetCookie("auth_token", token, maxAge, cookiePath, "", false, true)
@@ -68,6 +65,9 @@ func (h *AuthHandler) Logout(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
+
+	cookiePath := strings.TrimSuffix(strings.TrimSuffix(ctx.Request.URL.Path, "/"), "/logout")
+	ctx.SetCookie("auth_token", "", -1, cookiePath, "", false, true)
 
 	ctx.Status(http.StatusNoContent)
 }
