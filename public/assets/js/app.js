@@ -1,9 +1,11 @@
 import { useCreateDialog } from "./createDialog.js"
-import { useDataTable } from "./dataTable.js"
+import { useRoomDataTable } from "./roomDataTable.js"
 import { useLoginDialog } from "./loginDialog.js"
 import { useRooms } from "./rooms.js"
+import { useFiles } from "./files.js"
 import { useRouter } from "./router.js"
 import { useToast } from "./toast.js"
+import { useFilesDataTable } from "./fileDataTable.js"
 
 const els = {
     // Others
@@ -32,6 +34,7 @@ const els = {
     // Room
     logoutBtn: () => document.getElementById('logoutBtn'),
     deleteRoomBtn: () => document.getElementById('deleteRoomBtn'),
+    uploadForm: () => document.getElementById('uploadForm'),
     fileInput: () => document.getElementById('fileInput'),
     fileName: () => document.getElementById('fileName'),
     uploadBtn: () => document.getElementById('uploadBtn'),
@@ -44,8 +47,10 @@ const router = useRouter()
 const toast = useToast(els.toast)
 const createDialog = useCreateDialog(els.createDialog, els.createDialogPassword, els.createDialogLifespan, els.createDialogSubmitBtn, els.createDialogError)
 const loginDialog = useLoginDialog(els.loginDialog, els.loginDialogId, els.loginDialogPassword, els.loginDialogSubmitBtn, els.loginDialogError)
-const dataTable = useDataTable(els.tableBody, els.emptyState)
+const roomDataTable = useRoomDataTable(els.tableBody, els.emptyState)
+const filesDataTable = useFilesDataTable(els.filesTable, els.filesEmpty)
 const rooms = useRooms()
+const files = useFiles()
 
 function show(view) {
     document.getElementById('view-list').hidden = view !== 'list'
@@ -101,20 +106,17 @@ function wireEvents() {
         const action = btn.dataset.action
         const id = btn.dataset.id
         if (action === 'delete') {
-
-            dataTable.disableRowButtons(id, true)
+            roomDataTable.disableRowButtons(id, true)
             try {
                 const removed = await rooms.remove(id)
                 if (removed) {
-                    dataTable.removeRow(id)
+                    roomDataTable.removeRow(id)
                     toast.show('Deleted successfully!', 'success')
                 }
             } catch (error) {
                 toast.show(error, 'error')
             }
-
-            dataTable.disableRowButtons(id, false)
-
+            roomDataTable.disableRowButtons(id, false)
         }
         if (action === 'enter') {
             if (!await rooms.checkAccess(id)) loginDialog.open(id)
@@ -148,6 +150,28 @@ function wireEvents() {
         }
     })
 
+    els.uploadForm().addEventListener('submit', async (e) => {
+        e.preventDefault()
+        try {
+            els.uploadBtn().disabled = true
+            // Upload TODO
+            els.fileInput().value = ''
+            els.fileName().textContent = 'No file selected'
+        } catch (error) {
+            toast.show(error, 'error')
+        } finally {
+            els.uploadBtn().disabled = false
+        }
+    })
+
+    els.fileInput().addEventListener('change', () => {
+        const files = els.fileInput().files
+        els.fileName().textContent = files?.length
+            ? `${files.length} file(s) selected`
+            : 'No file selected'
+        els.uploadBtn().disabled = !(files && files.length > 0)
+    })
+
     els.backButton().addEventListener('click', () => router.navigate('/'))
 }
 
@@ -155,7 +179,7 @@ router.onRoute(async (from, to) => {
     if (to === '/') {
         show('list')
         try {
-            dataTable.loadData(await rooms.get())
+            roomDataTable.loadData(await rooms.get())
         } catch (error) {
             toast.show(error, 'error')
         }

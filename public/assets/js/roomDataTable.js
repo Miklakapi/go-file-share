@@ -1,6 +1,6 @@
 import { formatDate, shortId } from "./helpers.js"
 
-export function useDataTable(tableBodyElement, emptyElement) {
+export function useRoomDataTable(tableBodyElement, emptyElement) {
     function loadData(rooms) {
         const tbody = tableBodyElement()
         tbody.innerHTML = ''
