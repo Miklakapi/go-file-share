@@ -37,8 +37,13 @@
         </section>
 
         <section id="view-room" hidden>
-            <div class="toprow">
+            <div class="top-row">
                 <button class="btn" id="backBtn">← Back</button>
+
+                <div class="top-actions">
+                    <button class="btn" id="logoutBtn">Logout</button>
+                    <button class="btn danger" id="deleteRoomBtn">Delete room</button>
+                </div>
             </div>
 
             <div class="card">
@@ -47,6 +52,34 @@
                     <div class="muted-line" id="roomMeta"></div>
                 </div>
             </div>
+
+            <div class="card mt-12">
+                <div class="pad">
+                    <div class="files-head">
+                        <h3 class="section-title">Files</h3>
+                        <form id="uploadForm" class="upload">
+                            <div class="file-picker">
+                                <input class="file-input" type="file" id="fileInput" />
+                                <label class="file-btn btn" for="fileInput">Choose file</label>
+                                <span class="file-name muted-inline" id="fileName">No file selected</span>
+                                <button class="btn primary" id="uploadBtn" type="submit" disabled>Upload</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="muted" id="filesEmpty" hidden>No files yet</div>
+
+                    <table class="table" id="filesTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th class="right">Size</th>
+                                <th class="right"></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
         </section>
     </main>
 

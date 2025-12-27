@@ -239,3 +239,67 @@ button:disabled {
 .toast.info {
     background: var(--info);
 }
+
+.top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.top-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.mt-12 {
+    margin-top: 12px;
+}
+
+.files-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.upload {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.upload input[type="file"] {
+    max-width: 260px;
+}
+
+.file-picker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    border: 0;
+}
+
+.file-btn {
+    white-space: nowrap;
+}
+
+.muted-inline {
+    color: var(--muted);
+    font-size: 13px;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
