@@ -119,7 +119,11 @@ function wireEvents() {
 router.onRoute(async (from, to) => {
     if (to === '/') {
         show('list')
-        dataTable.loadData(await rooms.get())
+        try {
+            dataTable.loadData(await rooms.get())
+        } catch (error) {
+            toast.show(error, 'error')
+        }
         return
     }
 

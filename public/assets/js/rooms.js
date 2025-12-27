@@ -21,14 +21,10 @@ export function useRooms() {
             throw Error('Password is required')
         }
 
-        try {
-            await api(`/rooms/${id}/auth`, {
-                method: 'POST',
-                body: JSON.stringify({ password }),
-            })
-        } catch (e) {
-            throw Error(e.message)
-        }
+        await api(`/rooms/${id}/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ password }),
+        })
     }
 
     async function create(password, lifespan) {
@@ -39,15 +35,11 @@ export function useRooms() {
             throw Error('Lifespan must be a positive number (seconds)')
         }
 
-        try {
-            const response = await api('/rooms', {
-                method: 'POST',
-                body: JSON.stringify({ password, lifespan }),
-            })
-            return response.room.ID
-        } catch (e) {
-            throw Error(e.message)
-        }
+        const response = await api('/rooms', {
+            method: 'POST',
+            body: JSON.stringify({ password, lifespan }),
+        })
+        return response.room.ID
     }
 
     async function remove(id) {
