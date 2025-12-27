@@ -6,6 +6,31 @@ export function useRooms() {
         return rooms
     }
 
+    async function checkAccess(id) {
+        let status = true
+        try {
+            await api(`/rooms/${id}/access`)
+        } catch {
+            status = false
+        }
+        return status
+    }
+
+    async function auth(id, password) {
+        if (!password) {
+            throw Error('Password is required')
+        }
+
+        try {
+            await api(`/rooms/${id}/auth`, {
+                method: 'POST',
+                body: JSON.stringify({ password }),
+            })
+        } catch (e) {
+            throw Error(e.message)
+        }
+    }
+
     async function create(password, lifespan) {
         if (!password) {
             throw Error('Password is required')
@@ -15,10 +40,11 @@ export function useRooms() {
         }
 
         try {
-            await api('/rooms', {
+            const response = await api('/rooms', {
                 method: 'POST',
                 body: JSON.stringify({ password, lifespan }),
             })
+            return response.room.ID
         } catch (e) {
             throw Error(e.message)
         }
@@ -27,11 +53,13 @@ export function useRooms() {
     async function remove(id) {
         if (!confirm('Delete this room?')) return false
         await api(`/rooms/${id}`, { method: 'DELETE' })
-        return null
+        return true
     }
 
     return {
         get,
+        checkAccess,
+        auth,
         create,
         remove
     }

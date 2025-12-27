@@ -6,6 +6,8 @@
     --line: #e5e7eb;
     --primary: #2563eb;
     --danger: #dc2626;
+    --success: #16a34a;
+    --info: #6d97f1;
     --shadow: 0 6px 20px rgba(0, 0, 0, .08);
     --radius: 10px;
 }
@@ -193,4 +195,47 @@ button:disabled {
 
 .room-title {
     margin: 0 0 6px;
+}
+
+.toast-container {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 9999;
+}
+
+.toast {
+    min-width: 220px;
+    max-width: 420px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    background: #111827;
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.35;
+
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity .18s ease, transform .18s ease;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.success {
+    background: var(--success);
+}
+
+.toast.error {
+    background: var(--danger);
+}
+
+.toast.info {
+    background: var(--info);
 }

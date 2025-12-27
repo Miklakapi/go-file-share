@@ -76,6 +76,30 @@
         </form>
     </dialog>
 
+    <dialog class="dialog" id="loginDialog">
+        <form class="dialog-body" id="loginForm">
+            <div class="dialog-head">
+                <h3>Login Form</h3>
+                <button class="btn ghost" value="cancel" aria-label="Close">✕</button>
+            </div>
+
+            <input type="hidden" id="loginId" />
+
+            <label class="field">
+                <span>Password</span>
+                <input type="password" id="loginPassword" autocomplete="new-password" placeholder="Required" />
+            </label>
+
+            <div class="dialog-footer">
+                <button class="btn primary" id="loginSubmitBtn">Login</button>
+            </div>
+
+            <p class="error" id="loginError" hidden></p>
+        </form>
+    </dialog>
+
+    <div class="toast-container" id="toastContainer"></div>
+
     <script type="module" src="/assets/js/app.js"></script>
 </body>
 
