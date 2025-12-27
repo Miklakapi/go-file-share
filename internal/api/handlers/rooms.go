@@ -33,6 +33,33 @@ func (h *RoomsHandler) Get(ctx *gin.Context) {
 	})
 }
 
+func (h *RoomsHandler) CheckAccess(ctx *gin.Context) {
+	roomIdAny, _ := ctx.Get(middleware.CtxRoomIDKey)
+	roomId := roomIdAny.(uuid.UUID)
+
+	token, err := ctx.Cookie("auth_token")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	ok, err := h.Deps.FileShareService.CheckRoomAccess(h.Deps.AppContext, roomId, token)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+	}
+	if !ok {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"message": "room not found",
+		})
+	}
+
+	ctx.Status(http.StatusNoContent)
+}
+
 func (h *RoomsHandler) GetByUUID(ctx *gin.Context) {
 	roomIdAny, _ := ctx.Get(middleware.CtxRoomIDKey)
 	roomId := roomIdAny.(uuid.UUID)

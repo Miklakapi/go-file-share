@@ -54,6 +54,22 @@ func (s *Service) Room(ctx context.Context, id uuid.UUID) (domain.RoomSnapshot, 
 	return snap, true, nil
 }
 
+func (s *Service) CheckRoomAccess(ctx context.Context, id uuid.UUID, token string) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+
+	room, ok, err := s.rooms.Get(ctx, id)
+	if err != nil {
+		return false, err
+	}
+	if !ok || room == nil {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func (s *Service) Rooms(ctx context.Context) ([]domain.RoomSnapshot, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err

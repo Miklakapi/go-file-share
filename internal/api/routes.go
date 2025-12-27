@@ -41,6 +41,7 @@ func RegisterRoutes(router *gin.Engine, deps *app.DependencyBag, handlers *Handl
 		securedRooms := api.Group("/rooms/:roomID", middleware.RoomIDParam(), middleware.AuthMiddleware(deps))
 		{
 			securedRooms.DELETE("", handlers.RoomsHandler.Delete)
+			securedRooms.GET("/access", handlers.RoomsHandler.CheckAccess)
 			securedRooms.POST("/logout", handlers.AuthHandler.Logout)
 
 			files := securedRooms.Group("/files")
