@@ -55,18 +55,18 @@ func (h *RoomsHandler) GetByUUID(ctx *gin.Context) {
 }
 
 func (h *RoomsHandler) Create(ctx *gin.Context) {
-	createRequest := dto.CreateRoomRequest{}
+	requestData := dto.CreateRoomRequest{}
 
-	if err := ctx.ShouldBind(&createRequest); err != nil {
+	if err := ctx.ShouldBind(&requestData); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "Could not parse request data",
 		})
 		return
 	}
 
-	duration := time.Second * time.Duration(createRequest.Lifespan)
+	duration := time.Second * time.Duration(requestData.Lifespan)
 
-	room, token, err := h.Deps.FileShareService.CreateRoom(h.Deps.AppContext, createRequest.Password, duration)
+	room, token, err := h.Deps.FileShareService.CreateRoom(h.Deps.AppContext, requestData.Password, duration)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
