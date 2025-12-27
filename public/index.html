@@ -1,14 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>File Share - Rooms</title>
+    <link rel="stylesheet" href="/assets/css/app.css" />
 </head>
 
 <body>
-    <h1>TEST</h1>
+    <header class="top-bar">
+        <h1>Rooms</h1>
+        <button class="btn primary" id="openCreateBtn">+ Create room</button>
+    </header>
+
+    <main class="container">
+        <section id="view-list">
+            <div class="card">
+                <table class="table" id="roomsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Expires</th>
+                            <th>Files</th>
+                            <th>People with access</th>
+                            <th class="right"></th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+                <div class="muted" id="emptyState" hidden>
+                    No rooms yet. Create one
+                </div>
+            </div>
+        </section>
+
+        <section id="view-room" hidden>
+            <div class="toprow">
+                <button class="btn" id="backBtn">← Back</button>
+            </div>
+
+            <div class="card">
+                <div class="pad">
+                    <h2 class="room-title" id="roomTitle">Room</h2>
+                    <div class="muted-line" id="roomMeta"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <dialog class="dialog" id="createDialog">
+        <form class="dialog-body" id="createForm">
+            <div class="dialog-head">
+                <h3>Create room</h3>
+                <button class="btn ghost" value="cancel" aria-label="Close">✕</button>
+            </div>
+
+            <label class="field">
+                <span>Password</span>
+                <input type="password" id="createPassword" autocomplete="new-password" placeholder="Required" />
+            </label>
+
+            <label class="field">
+                <span>Lifespan (seconds)</span>
+                <input type="number" id="createLifespan" value="6000" min="1" step="1" />
+            </label>
+
+            <div class="dialog-footer">
+                <button class="btn" value="cancel">Cancel</button>
+                <button class="btn primary" id="createSubmitBtn">Create</button>
+            </div>
+
+            <p class="error" id="createError" hidden></p>
+        </form>
+    </dialog>
+
+    <script type="module" src="/assets/js/app.js"></script>
 </body>
 
 </html>
