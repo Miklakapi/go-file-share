@@ -30,7 +30,7 @@ func main() {
 
 	roomRepo := roomrepository.NewMemoryRepo()
 	fileStore := filestore.TestStore{}
-	hasher := security.BcryptHasher{Cost: 14}
+	hasher := security.BcryptHasher{Cost: 12}
 	tokenService := security.NewJwtService(config.JWTSecret)
 
 	deps := app.NewDependencyBag(appCtx, config, roomRepo, fileStore, hasher, tokenService)

@@ -14,7 +14,7 @@ var _ ports.PasswordHasher = (*BcryptHasher)(nil)
 func (h BcryptHasher) Hash(plain string) (string, error) {
 	cost := h.Cost
 	if cost == 0 {
-		cost = 14
+		cost = 12
 	}
 	b, err := bcrypt.GenerateFromPassword([]byte(plain), cost)
 	return string(b), err
