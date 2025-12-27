@@ -29,6 +29,15 @@ const els = {
     loginDialogPassword: () => document.getElementById('loginPassword'),
     loginDialogSubmitBtn: () => document.getElementById('loginSubmitBtn'),
     loginDialogError: () => document.getElementById('loginError'),
+    // Room
+    logoutBtn: () => document.getElementById('logoutBtn'),
+    deleteRoomBtn: () => document.getElementById('deleteRoomBtn'),
+    fileInput: () => document.getElementById('fileInput'),
+    fileName: () => document.getElementById('fileName'),
+    uploadBtn: () => document.getElementById('uploadBtn'),
+    //// File table
+    filesTable: () => document.getElementById('filesTable'),
+    filesEmpty: () => document.getElementById('filesEmpty'),
 }
 
 const router = useRouter()
@@ -110,6 +119,32 @@ function wireEvents() {
         if (action === 'enter') {
             if (!await rooms.checkAccess(id)) loginDialog.open(id)
             else router.navigate(`/rooms/${id}`)
+        }
+    })
+
+    els.logoutBtn().addEventListener('click', async () => {
+        try {
+            const id = router.getRoomId()
+            if (!id) throw Error('Unable to get room ID')
+            await rooms.logout(id)
+            toast.show('Logged out!', 'success')
+            router.navigate('/')
+        } catch (error) {
+            toast.show(error, 'error')
+        }
+    })
+
+    els.deleteRoomBtn().addEventListener('click', async () => {
+        try {
+            const id = router.getRoomId()
+            if (!id) throw Error('Unable to get room ID')
+            const removed = await rooms.remove(id)
+            if (removed) {
+                toast.show('Deleted successfully!', 'success')
+                router.navigate('/')
+            }
+        } catch (error) {
+            toast.show(error, 'error')
         }
     })
 

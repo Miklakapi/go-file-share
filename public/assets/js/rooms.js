@@ -27,6 +27,12 @@ export function useRooms() {
         })
     }
 
+    async function logout(id) {
+        await api(`/rooms/${id}/logout`, {
+            method: 'POST'
+        })
+    }
+
     async function create(password, lifespan) {
         if (!password) {
             throw Error('Password is required')
@@ -52,6 +58,7 @@ export function useRooms() {
         get,
         checkAccess,
         auth,
+        logout,
         create,
         remove
     }
