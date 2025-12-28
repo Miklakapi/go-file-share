@@ -16,17 +16,17 @@ type Service struct {
 	files       ports.FileStore
 	hasher      ports.PasswordHasher
 	tokenIssuer ports.TokenService
-	settings    Settings
+	policy      domain.Policy
 	now         func() time.Time
 }
 
-func NewService(rooms ports.RoomRepository, files ports.FileStore, hasher ports.PasswordHasher, tokenIssuer ports.TokenService, settings Settings) *Service {
+func NewService(rooms ports.RoomRepository, files ports.FileStore, hasher ports.PasswordHasher, tokenIssuer ports.TokenService, policy domain.Policy) *Service {
 	return &Service{
 		rooms:       rooms,
 		files:       files,
 		hasher:      hasher,
 		tokenIssuer: tokenIssuer,
-		settings:    settings,
+		policy:      policy,
 		now:         time.Now,
 	}
 }
@@ -89,9 +89,9 @@ func (s *Service) CreateRoom(ctx context.Context, password string, lifespan time
 	}
 
 	if lifespan <= 0 {
-		lifespan = s.settings.DefaultRoomTTL
+		lifespan = s.policy.DefaultRoomTTL
 	}
-	if s.settings.MaxRoomLifespan > 0 && lifespan > s.settings.MaxRoomLifespan {
+	if s.policy.MaxRoomLifespan > 0 && lifespan > s.policy.MaxRoomLifespan {
 		return domain.RoomSnapshot{}, "", domain.ErrRoomLifespanTooLong
 	}
 
@@ -174,9 +174,9 @@ func (s *Service) AuthRoom(ctx context.Context, id uuid.UUID, password string, l
 	}
 
 	if lifespan <= 0 {
-		lifespan = s.settings.DefaultTokenTTL
+		lifespan = s.policy.DefaultTokenTTL
 	}
-	if s.settings.MaxTokenLifespan > 0 && lifespan > s.settings.MaxTokenLifespan {
+	if s.policy.MaxTokenLifespan > 0 && lifespan > s.policy.MaxTokenLifespan {
 		return "", time.Time{}, domain.ErrTokenLifespanTooLong
 	}
 

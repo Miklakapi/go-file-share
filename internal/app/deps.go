@@ -5,6 +5,7 @@ import (
 
 	"github.com/Miklakapi/go-file-share/internal/config"
 	fileShare "github.com/Miklakapi/go-file-share/internal/file-share/application"
+	fileShareDomain "github.com/Miklakapi/go-file-share/internal/file-share/domain"
 	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 )
 
@@ -28,7 +29,7 @@ func NewDependencyBag(
 	hasher ports.PasswordHasher,
 	tokenService ports.TokenService,
 ) *DependencyBag {
-	fileShareSettings := fileShare.NewSettings(
+	fileShareSettings := fileShareDomain.NewPolicy(
 		config.DefaultRoomTTL,
 		config.TokenTTL,
 		config.MaxFiles,

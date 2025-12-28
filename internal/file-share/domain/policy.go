@@ -1,10 +1,10 @@
-package application
+package domain
 
 import (
 	"time"
 )
 
-type Settings struct {
+type Policy struct {
 	DefaultRoomTTL   time.Duration
 	DefaultTokenTTL  time.Duration
 	MaxFiles         int
@@ -14,7 +14,7 @@ type Settings struct {
 	CleanupInterval  time.Duration
 }
 
-func NewSettings(
+func NewPolicy(
 	defaultRoomTTL time.Duration,
 	defaultTokenTTL time.Duration,
 	maxFiles int,
@@ -22,8 +22,8 @@ func NewSettings(
 	maxRoomLifespan time.Duration,
 	maxTokenLifespan time.Duration,
 	cleanupInterval time.Duration,
-) Settings {
-	return Settings{
+) Policy {
+	return Policy{
 		DefaultRoomTTL:   defaultRoomTTL,
 		DefaultTokenTTL:  defaultTokenTTL,
 		MaxFiles:         maxFiles,
