@@ -252,8 +252,35 @@ func (s *Service) File(ctx context.Context, roomId, fileId uuid.UUID, token stri
 	return *f, nil
 }
 
-func (s *Service) DownloadFile(ctx context.Context, roomId, fileId uuid.UUID, token string) (io.ReadCloser, error) {
-	panic("TODO")
+func (s *Service) DownloadFile(ctx context.Context, roomId, fileId uuid.UUID, token string) (domain.FileRoomFile, io.ReadCloser, error) {
+	if err := ctx.Err(); err != nil {
+		return domain.FileRoomFile{}, nil, err
+	}
+
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return domain.FileRoomFile{}, nil, domain.ErrEmptyToken
+	}
+
+	room, ok, err := s.rooms.GetByToken(ctx, roomId, token)
+	if err != nil {
+		return domain.FileRoomFile{}, nil, err
+	}
+	if !ok || room == nil {
+		return domain.FileRoomFile{}, nil, domain.ErrRoomNotFound
+	}
+
+	file, ok := room.GetFile(fileId)
+	if !ok || file == nil {
+		return domain.FileRoomFile{}, nil, domain.ErrFileNotFound
+	}
+
+	rc, err := s.files.Open(ctx, file.Path)
+	if err != nil {
+		return domain.FileRoomFile{}, nil, err
+	}
+
+	return *file, rc, nil
 }
 
 func (s *Service) Files(ctx context.Context, id uuid.UUID, token string) ([]domain.FileRoomFile, error) {

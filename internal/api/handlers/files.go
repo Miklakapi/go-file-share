@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
 	"github.com/Miklakapi/go-file-share/internal/app"
@@ -85,17 +87,25 @@ func (h *FilesHandler) Download(ctx *gin.Context) {
 		return
 	}
 
-	_, err = h.Deps.FileShareService.DownloadFile(h.Deps.AppContext, roomId, fileId, token)
+	meta, rc, err := h.Deps.FileShareService.DownloadFile(h.Deps.AppContext, roomId, fileId, token)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
 		return
 	}
+	defer func() { _ = rc.Close() }()
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "pong",
-	})
+	ctx.Header("Content-Disposition", `attachment; filename="`+meta.Name+`"`)
+	ctx.Header("Content-Type", "application/octet-stream")
+	if meta.Size > 0 {
+		ctx.Header("Content-Length", strconv.FormatInt(meta.Size, 10))
+	}
+
+	_, copyErr := io.Copy(ctx.Writer, rc)
+	if copyErr != nil {
+		return
+	}
 }
 
 func (h *FilesHandler) Upload(ctx *gin.Context) {
