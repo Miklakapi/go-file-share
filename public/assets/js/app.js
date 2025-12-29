@@ -39,7 +39,7 @@ const els = {
     fileName: () => document.getElementById('fileName'),
     uploadBtn: () => document.getElementById('uploadBtn'),
     //// File table
-    filesTable: () => document.getElementById('filesTable'),
+    filesTableBody: () => document.querySelector('#filesTable tbody'),
     filesEmpty: () => document.getElementById('filesEmpty'),
 }
 
@@ -48,7 +48,7 @@ const toast = useToast(els.toast)
 const createDialog = useCreateDialog(els.createDialog, els.createDialogPassword, els.createDialogLifespan, els.createDialogSubmitBtn, els.createDialogError)
 const loginDialog = useLoginDialog(els.loginDialog, els.loginDialogId, els.loginDialogPassword, els.loginDialogSubmitBtn, els.loginDialogError)
 const roomDataTable = useRoomDataTable(els.tableBody, els.emptyState)
-const filesDataTable = useFilesDataTable(els.filesTable, els.filesEmpty)
+const filesDataTable = useFilesDataTable(els.filesTableBody, els.filesEmpty)
 const rooms = useRooms()
 const files = useFiles()
 
@@ -191,6 +191,40 @@ function wireEvents() {
             ? `${files.length} file(s) selected`
             : 'No file selected'
         els.uploadBtn().disabled = !(files && files.length > 0)
+    })
+
+    els.filesTableBody().addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-action]')
+        if (!btn) return
+
+        let roomId = router.getRoomId()
+        if (!roomId) {
+            toast.show('Unable to get room ID', 'error')
+            return
+        }
+
+        const action = btn.dataset.action
+        const fileId = btn.dataset.id
+        if (action === 'delete') {
+            filesDataTable.disableRowButtons(fileId, true)
+            try {
+                const removed = await files.remove(roomId, fileId)
+                if (removed) {
+                    filesDataTable.removeRow(fileId)
+                    toast.show('Deleted successfully!', 'success')
+                }
+            } catch (error) {
+                toast.show(error, 'error')
+            }
+            filesDataTable.disableRowButtons(fileId, false)
+        }
+        if (action === 'download') {
+            try {
+                await files.download(roomId, fileId)
+            } catch (error) {
+                toast.show(error, 'error')
+            }
+        }
     })
 
     els.backButton().addEventListener('click', () => router.navigate('/'))

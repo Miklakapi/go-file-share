@@ -1,7 +1,16 @@
 export async function api(path, options = {}) {
-    const res = await fetch('/api/v1' + path, {
+    const url = '/api/v1' + path
+    const isFormData = options?.body instanceof FormData
+    const wantsBlob = options?.responseType === 'blob'
+    const headers = new Headers(options.headers || {})
+
+    if (!isFormData && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json')
+    }
+
+    const res = await fetch(url, {
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         ...options,
     })
 
@@ -11,13 +20,22 @@ export async function api(path, options = {}) {
             const data = await res.json()
             message = data?.message || message
         } catch {
-            const text = await res.text()
-            if (text) message = text
+            try {
+                const text = await res.text()
+                if (text) message = text
+            } catch { }
         }
         throw new Error(message)
     }
 
-    return res.status === 204 ? null : res.json()
+    if (res.status === 204) return null
+    if (wantsBlob) {
+        return {
+            data: await res.blob(),
+            headers: res.headers
+        }
+    }
+    return res.json()
 }
 
 export function formatDate(iso) {

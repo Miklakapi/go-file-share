@@ -29,8 +29,7 @@ export function useFiles() {
 
         const res = await api(`/rooms/${roomId}/files`, {
             method: 'POST',
-            body: form,
-            headers: {},
+            body: form
         })
 
         return res.data.ID
@@ -40,6 +39,19 @@ export function useFiles() {
         if (!confirm('Delete this file?')) return false
         await api(`/rooms/${roomId}/files/${fileId}`, { method: 'DELETE' })
         return true
+    }
+
+    function filenameFromDisposition(disposition) {
+        if (!disposition) return null
+
+        const match = disposition.match(/filename\*?=(?:UTF-8'')?("?)([^";]+)\1/i)
+        if (!match) return null
+
+        try {
+            return decodeURIComponent(match[2])
+        } catch {
+            return match[2]
+        }
     }
 
     function triggerBrowserDownload(blob, filename) {
