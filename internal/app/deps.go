@@ -36,7 +36,6 @@ func NewDependencyBag(
 		config.MaxRoomBytes,
 		config.MaxRoomLifespan,
 		config.MaxTokenLifespan,
-		config.CleanupInterval,
 	)
 
 	fileShareService := fileShare.NewService(roomRepo, fileStore, hasher, tokenService, fileShareSettings)

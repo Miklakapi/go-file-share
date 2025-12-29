@@ -11,7 +11,6 @@ type Policy struct {
 	MaxRoomBytes     int64
 	MaxRoomLifespan  time.Duration
 	MaxTokenLifespan time.Duration
-	CleanupInterval  time.Duration
 }
 
 func NewPolicy(
@@ -21,7 +20,6 @@ func NewPolicy(
 	maxRoomBytes int64,
 	maxRoomLifespan time.Duration,
 	maxTokenLifespan time.Duration,
-	cleanupInterval time.Duration,
 ) Policy {
 	return Policy{
 		DefaultRoomTTL:   defaultRoomTTL,
@@ -30,6 +28,5 @@ func NewPolicy(
 		MaxRoomBytes:     maxRoomBytes,
 		MaxRoomLifespan:  maxRoomLifespan,
 		MaxTokenLifespan: maxTokenLifespan,
-		CleanupInterval:  cleanupInterval,
 	}
 }
