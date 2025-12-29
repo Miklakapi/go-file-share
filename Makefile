@@ -9,14 +9,16 @@ endif
 
 GO ?= go
 
-.PHONY: help run-ram run-redis run-sqlite run-test
+.PHONY: help run-ram run-redis run-sqlite build-ram build-redis build-sqlite
 
 help:
 	@echo "Targets:"
-	@echo "  make run-ram      - run cmd/ram-app"
-	@echo "  make run-redis    - run cmd/redis-app"
-	@echo "  make run-sqlite   - run cmd/sqlite-app"
-	@echo "  make run-test     - run cmd/test-app"
+	@echo "  make run-ram"
+	@echo "  make run-redis"
+	@echo "  make run-sqlite"
+	@echo "  make build-ram"
+	@echo "  make build-redis"
+	@echo "  make build-sqlite"
 
 run-ram:
 	$(GO) run ./cmd/ram-app/main.go
@@ -27,5 +29,11 @@ run-redis:
 run-sqlite:
 	$(GO) run ./cmd/sqlite-app/main.go
 
-run-test:
-	$(GO) run ./cmd/test-app/main.go
+build-ram:
+	go build -o ./bin/ram-app ./cmd/ram-app/main.go
+
+build-redis:
+	go build -o ./bin/redis-app ./cmd/redis-app/main.go
+
+build-sqlite:
+	go build -o ./bin/sqlite-app ./cmd/sqlite-app/main.go
