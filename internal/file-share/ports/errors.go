@@ -6,9 +6,10 @@ var (
 	ErrRoomAlreadyExists = errors.New("room already exists")
 	ErrRoomNotFound      = errors.New("room not found")
 
-	ErrNilReader      = errors.New("file reader is nil")
-	ErrEmptyFilename  = errors.New("filename is empty")
-	ErrEmptyUploadDir = errors.New("upload dir is empty")
+	ErrNilReader        = errors.New("file reader is nil")
+	ErrEmptyFilename    = errors.New("filename is empty")
+	ErrEmptyUploadDir   = errors.New("upload dir is empty")
+	ErrInvalidUploadDir = errors.New("invalid upload dir")
 
 	ErrInvalidToken      = errors.New("token invalid")
 	ErrTokenSignAlgo     = errors.New("unexpected signing method")

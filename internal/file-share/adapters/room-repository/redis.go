@@ -60,3 +60,11 @@ func (r *RedisRepo) GetPasswordHash(ctx context.Context, roomID uuid.UUID) (hash
 func (r *RedisRepo) AddToken(ctx context.Context, roomID uuid.UUID, token string) error {
 	panic("TODO")
 }
+
+func (r *RedisRepo) AddFileByToken(ctx context.Context, roomID uuid.UUID, token string, file *domain.FileRoomFile) (bool, error) {
+	panic("TODO")
+}
+
+func (r *RedisRepo) DeleteFileByToken(ctx context.Context, roomID, fileID uuid.UUID, token string) (string, bool, error) {
+	panic("TODO")
+}

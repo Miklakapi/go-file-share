@@ -19,4 +19,6 @@ type RoomRepository interface {
 	RemoveToken(ctx context.Context, roomID uuid.UUID, token string) (bool, error)
 	GetPasswordHash(ctx context.Context, roomID uuid.UUID) (hash string, ok bool, err error)
 	AddToken(ctx context.Context, roomID uuid.UUID, token string) error
+	AddFileByToken(ctx context.Context, roomID uuid.UUID, token string, file *domain.FileRoomFile) (bool, error)
+	DeleteFileByToken(ctx context.Context, roomID, fileID uuid.UUID, token string) (string, bool, error)
 }

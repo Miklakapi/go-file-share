@@ -11,6 +11,7 @@ type Policy struct {
 	MaxRoomBytes     int64
 	MaxRoomLifespan  time.Duration
 	MaxTokenLifespan time.Duration
+	UploadDir        string
 }
 
 func NewPolicy(
@@ -20,6 +21,7 @@ func NewPolicy(
 	maxRoomBytes int64,
 	maxRoomLifespan time.Duration,
 	maxTokenLifespan time.Duration,
+	uploadDir string,
 ) Policy {
 	return Policy{
 		DefaultRoomTTL:   defaultRoomTTL,
@@ -28,5 +30,6 @@ func NewPolicy(
 		MaxRoomBytes:     maxRoomBytes,
 		MaxRoomLifespan:  maxRoomLifespan,
 		MaxTokenLifespan: maxTokenLifespan,
+		UploadDir:        uploadDir,
 	}
 }

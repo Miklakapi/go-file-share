@@ -60,3 +60,11 @@ func (r *SqliteRepo) GetPasswordHash(ctx context.Context, roomID uuid.UUID) (has
 func (r *SqliteRepo) AddToken(ctx context.Context, roomID uuid.UUID, token string) error {
 	panic("TODO")
 }
+
+func (r *SqliteRepo) AddFileByToken(ctx context.Context, roomID uuid.UUID, token string, file *domain.FileRoomFile) (bool, error) {
+	panic("TODO")
+}
+
+func (r *SqliteRepo) DeleteFileByToken(ctx context.Context, roomID, fileID uuid.UUID, token string) (string, bool, error) {
+	panic("TODO")
+}

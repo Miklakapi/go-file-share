@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"errors"
+	"io"
 	"strings"
 	"time"
 
@@ -59,7 +60,7 @@ func (s *Service) CheckRoomAccess(ctx context.Context, id uuid.UUID, token strin
 		return false, err
 	}
 
-	room, ok, err := s.rooms.Get(ctx, id)
+	room, ok, err := s.rooms.GetByToken(ctx, id, token)
 	if err != nil {
 		return false, err
 	}
@@ -220,6 +221,135 @@ func (s *Service) LogoutRoom(ctx context.Context, id uuid.UUID, token string) er
 	}
 	if !ok {
 		return domain.ErrTokenNotFound
+	}
+
+	return nil
+}
+
+func (s *Service) File(ctx context.Context, roomId, fileId uuid.UUID, token string) (domain.FileRoomFile, error) {
+	if err := ctx.Err(); err != nil {
+		return domain.FileRoomFile{}, err
+	}
+
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return domain.FileRoomFile{}, domain.ErrEmptyToken
+	}
+
+	room, ok, err := s.rooms.GetByToken(ctx, roomId, token)
+	if err != nil {
+		return domain.FileRoomFile{}, err
+	}
+	if !ok || room == nil {
+		return domain.FileRoomFile{}, domain.ErrRoomNotFound
+	}
+
+	f, ok := room.GetFile(fileId)
+	if !ok || f == nil {
+		return domain.FileRoomFile{}, domain.ErrFileNotFound
+	}
+
+	return *f, nil
+}
+
+func (s *Service) DownloadFile(ctx context.Context, roomId, fileId uuid.UUID, token string) (io.ReadCloser, error) {
+	panic("TODO")
+}
+
+func (s *Service) Files(ctx context.Context, id uuid.UUID, token string) ([]domain.FileRoomFile, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return nil, domain.ErrEmptyToken
+	}
+
+	room, ok, err := s.rooms.GetByToken(ctx, id, token)
+	if err != nil {
+		return nil, err
+	}
+	if !ok || room == nil {
+		return nil, domain.ErrRoomNotFound
+	}
+
+	files := room.ListFiles()
+
+	out := make([]domain.FileRoomFile, 0, len(files))
+	for _, f := range files {
+		if f == nil {
+			continue
+		}
+		out = append(out, *f)
+	}
+
+	return out, nil
+}
+
+func (s *Service) UploadFile(ctx context.Context, roomId uuid.UUID, token string, filename string, r io.Reader) (domain.FileRoomFile, error) {
+	if err := ctx.Err(); err != nil {
+		return domain.FileRoomFile{}, err
+	}
+
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return domain.FileRoomFile{}, domain.ErrEmptyToken
+	}
+
+	filename = strings.TrimSpace(filename)
+	if filename == "" {
+		return domain.FileRoomFile{}, ports.ErrEmptyFilename
+	}
+	if r == nil {
+		return domain.FileRoomFile{}, ports.ErrNilReader
+	}
+
+	path, size, err := s.files.Save(ctx, s.policy.UploadDir, filename, r)
+	if err != nil {
+		return domain.FileRoomFile{}, err
+	}
+
+	now := s.now()
+	meta, err := domain.NewFileRoomFile(path, filename, size, now)
+	if err != nil {
+		_ = s.files.Delete(ctx, path)
+		return domain.FileRoomFile{}, err
+	}
+
+	ok, err := s.rooms.AddFileByToken(ctx, roomId, token, meta)
+	if err != nil {
+		_ = s.files.Delete(ctx, path)
+		return domain.FileRoomFile{}, err
+	}
+	if !ok {
+		_ = s.files.Delete(ctx, path)
+		return domain.FileRoomFile{}, domain.ErrRoomNotFound
+	}
+
+	return *meta, nil
+}
+
+func (s *Service) DeleteFile(ctx context.Context, roomId, fileId uuid.UUID, token string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return domain.ErrEmptyToken
+	}
+
+	path, ok, err := s.rooms.DeleteFileByToken(ctx, roomId, fileId, token)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return domain.ErrFileNotFound
+	}
+
+	if err := s.files.Delete(ctx, path); err != nil {
+		return err
 	}
 
 	return nil

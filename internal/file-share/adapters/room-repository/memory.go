@@ -261,6 +261,63 @@ func (r *MemoryRepo) AddToken(ctx context.Context, roomID uuid.UUID, token strin
 	return room.AddToken(token)
 }
 
+func (r *MemoryRepo) AddFileByToken(ctx context.Context, roomID uuid.UUID, token string, file *domain.FileRoomFile) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+	if file == nil {
+		return false, domain.ErrInvalidFile
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	room, ok := r.rooms[roomID]
+	if !ok || room == nil {
+		return false, nil
+	}
+
+	if !room.HasToken(token) {
+		return false, nil
+	}
+
+	cp := *file
+	if room.Files == nil {
+		room.Files = make(map[uuid.UUID]*domain.FileRoomFile)
+	}
+	room.Files[cp.ID] = &cp
+
+	return true, nil
+}
+
+func (r *MemoryRepo) DeleteFileByToken(ctx context.Context, roomID, fileID uuid.UUID, token string) (string, bool, error) {
+	if err := ctx.Err(); err != nil {
+		return "", false, err
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	room, ok := r.rooms[roomID]
+	if !ok || room == nil {
+		return "", false, nil
+	}
+
+	if !room.HasToken(token) {
+		return "", false, nil
+	}
+
+	f, ok := room.Files[fileID]
+	if !ok || f == nil {
+		return "", false, nil
+	}
+
+	path := f.Path
+	delete(room.Files, fileID)
+
+	return path, true, nil
+}
+
 func cloneRoom(src *domain.FileRoom) *domain.FileRoom {
 	if src == nil {
 		return nil

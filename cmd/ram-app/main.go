@@ -35,6 +35,10 @@ func main() {
 
 	deps := app.NewDependencyBag(appCtx, config, roomRepo, fileStore, hasher, tokenService)
 
+	if err := fileStore.ClearAll(appCtx, config.UploadDir); err != nil {
+		log.Fatalf("file error: %v", err)
+	}
+
 	engine := gin.New()
 	engine.Use(gin.Logger(), gin.Recovery())
 

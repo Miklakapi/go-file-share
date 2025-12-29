@@ -14,6 +14,47 @@ type DiskStore struct{}
 
 var _ ports.FileStore = (*DiskStore)(nil)
 
+func (DiskStore) ClearAll(ctx context.Context, uploadDir string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	if uploadDir == "" {
+		return nil
+	}
+
+	info, err := os.Stat(uploadDir)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return err
+	}
+
+	if !info.IsDir() {
+		return ports.ErrInvalidUploadDir
+	}
+
+	entries, err := os.ReadDir(uploadDir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
+		path := filepath.Join(uploadDir, entry.Name())
+
+		if err := os.RemoveAll(path); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (DiskStore) Save(ctx context.Context, uploadDir, name string, r io.Reader) (path string, size int64, err error) {
 	if err := ctx.Err(); err != nil {
 		return "", 0, err
