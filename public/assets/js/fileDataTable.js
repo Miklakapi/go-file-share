@@ -1,3 +1,5 @@
+import { formatDate } from "./helpers.js"
+
 export function useFilesDataTable(tableBodyElement, emptyElement) {
     function loadData(files) {
         const tbody = tableBodyElement()
@@ -12,7 +14,19 @@ export function useFilesDataTable(tableBodyElement, emptyElement) {
         for (const f of files) {
             const tr = document.createElement('tr')
             tr.dataset.id = f.ID
-            tr.innerHTML = ``
+
+            const name = f.Name ?? ''
+            const title = escapeAttr(name)
+
+            tr.innerHTML = `
+              <td title="${title}">${name}</td>
+              <td>${formatBytes(f.Size ?? 0)}</td>
+              <td>${formatDate(f.CreatedAt)}</td>
+              <td class="right actions">
+                <button class="btn" data-action="download" data-id="${f.ID}">Download</button>
+                <button class="btn danger" data-action="delete" data-id="${f.ID}">Delete</button>
+              </td>
+            `
             tbody.appendChild(tr)
         }
     }
@@ -42,6 +56,31 @@ export function useFilesDataTable(tableBodyElement, emptyElement) {
 
     function showEmptyState(show) {
         emptyElement().hidden = !show
+    }
+
+    function formatBytes(bytes) {
+        const b = Number(bytes || 0)
+        if (!b) return '0 B'
+
+        const units = ['B', 'KB', 'MB', 'GB', 'TB']
+        let i = 0
+        let n = b
+
+        while (n >= 1024 && i < units.length - 1) {
+            n /= 1024
+            i++
+        }
+
+        const val = i === 0 ? Math.round(n).toString() : n.toFixed(1)
+        return `${val} ${units[i]}`
+    }
+
+    function escapeAttr(s) {
+        return String(s ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('"', '&quot;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
     }
 
     return {

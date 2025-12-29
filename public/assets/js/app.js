@@ -154,10 +154,31 @@ function wireEvents() {
         e.preventDefault()
         try {
             els.uploadBtn().disabled = true
-            // Upload TODO
-            els.fileInput().value = ''
+            const input = els.fileInput()
+
+            const id = router.getRoomId()
+            if (!id) throw Error('Unable to get room ID')
+
+            const filesToUpload = input?.files ? Array.from(input.files) : []
+            if (filesToUpload.length === 0) {
+                throw Error('No file selected')
+            }
+
+            const results = await Promise.allSettled(filesToUpload.map(file => files.upload(id, file)))
+
+            const failed = results.filter(r => r.status === 'rejected')
+            if (failed.length > 0) {
+                toast.show(failed[0].reason, 'error')
+            } else {
+                toast.show('Upload completed', 'success')
+            }
+
+            input.value = ''
             els.fileName().textContent = 'No file selected'
+
+            filesDataTable.loadData(await files.get(id))
         } catch (error) {
+            console.log(error)
             toast.show(error, 'error')
         } finally {
             els.uploadBtn().disabled = false
@@ -195,6 +216,11 @@ router.onRoute(async (from, to) => {
         }
         show('room')
         document.getElementById('roomTitle').textContent = `Room ${roomId}`
+        try {
+            filesDataTable.loadData(await files.get(roomId))
+        } catch (error) {
+            toast.show(error, 'error')
+        }
         return
     }
     router.replace('/')
