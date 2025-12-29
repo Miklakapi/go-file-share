@@ -122,7 +122,7 @@ func (h *FilesHandler) Upload(ctx *gin.Context) {
 	}
 	defer func() { _ = src.Close() }()
 
-	file, err := h.Deps.FileShareService.UploadFile(h.Deps.AppContext, roomId, token, "", src)
+	file, err := h.Deps.FileShareService.UploadFile(h.Deps.AppContext, roomId, token, fh.Filename, src)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
