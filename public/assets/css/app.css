@@ -303,3 +303,31 @@ button:disabled {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+.muted-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.meta-badge {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 10px;
+    border: 1px solid rgba(0, 0, 0, .08);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .03);
+    line-height: 1.2;
+}
+
+.meta-label {
+    font-size: 12px;
+    opacity: .75;
+}
+
+.meta-value {
+    font-weight: 600;
+    font-size: 13px;
+}

@@ -6,6 +6,7 @@ import { useFiles } from "./files.js"
 import { useRouter } from "./router.js"
 import { useToast } from "./toast.js"
 import { useFilesDataTable } from "./fileDataTable.js"
+import { formatDate } from "./helpers.js"
 
 const els = {
     // Others
@@ -38,6 +39,8 @@ const els = {
     fileInput: () => document.getElementById('fileInput'),
     fileName: () => document.getElementById('fileName'),
     uploadBtn: () => document.getElementById('uploadBtn'),
+    roomTitle: () => document.getElementById('roomTitle'),
+    roomMeta: () => document.getElementById('roomMeta'),
     //// File table
     filesTableBody: () => document.querySelector('#filesTable tbody'),
     filesEmpty: () => document.getElementById('filesEmpty'),
@@ -248,9 +251,15 @@ router.onRoute(async (from, to) => {
             return
         }
         show('room')
-        document.getElementById('roomTitle').textContent = `Room ${roomId}`
         try {
-            filesDataTable.loadData(await files.get(roomId))
+            const [filesData, roomData] = await Promise.all([files.get(roomId), rooms.getById(roomId)])
+
+            filesDataTable.loadData(filesData)
+
+            const roomMeta = els.roomMeta()
+            els.roomTitle().textContent = `Room ${roomData.id}`
+            roomMeta.querySelector("#expiresMeta").textContent = formatDate(roomData.expiresAt)
+            roomMeta.querySelector("#tokensMeta").textContent = roomData.tokens
         } catch (error) {
             toast.show(error, 'error')
         }

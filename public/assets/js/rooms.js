@@ -2,8 +2,11 @@ import { api } from "./helpers.js"
 
 export function useRooms() {
     async function get() {
-        const rooms = (await api('/rooms')).data
-        return rooms
+        return (await api('/rooms')).data
+    }
+
+    async function getById(id) {
+        return (await api(`/rooms/${id}`)).data
     }
 
     async function checkAccess(id) {
@@ -56,6 +59,7 @@ export function useRooms() {
 
     return {
         get,
+        getById,
         checkAccess,
         auth,
         logout,

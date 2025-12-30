@@ -2,7 +2,7 @@ export function useCreateDialog(dialogElement, passwordField, lifespanField, sub
     function open() {
         setError('')
         passwordField().value = ''
-        lifespanField().value = '3600'
+        lifespanField().value = '600'
         dialogElement().showModal()
         passwordField().focus()
     }
