@@ -28,8 +28,13 @@ func (h *RoomsHandler) Get(ctx *gin.Context) {
 		})
 	}
 
+	result := make([]dto.Room, 0, len(rooms))
+	for _, r := range rooms {
+		result = append(result, dto.NewRoom(r))
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"data": rooms,
+		"data": result,
 	})
 }
 
@@ -78,7 +83,7 @@ func (h *RoomsHandler) GetByUUID(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"data": room,
+		"data": dto.NewRoom(room),
 	})
 }
 
@@ -109,7 +114,7 @@ func (h *RoomsHandler) Create(ctx *gin.Context) {
 	ctx.SetCookie("auth_token", token, int(duration.Seconds()), cookiePath, "", false, true)
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"data":  room,
+		"data":  dto.NewRoom(room),
 		"token": token,
 	})
 }

@@ -45,7 +45,7 @@ export function useRooms() {
             method: 'POST',
             body: JSON.stringify({ password, lifespan }),
         })
-        return response.data.ID
+        return response.data.id
     }
 
     async function remove(id) {

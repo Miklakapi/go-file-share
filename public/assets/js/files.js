@@ -32,7 +32,7 @@ export function useFiles() {
             body: form
         })
 
-        return res.data.ID
+        return res.data.id
     }
 
     async function remove(roomId, fileId) {

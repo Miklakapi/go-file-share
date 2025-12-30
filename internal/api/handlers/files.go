@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Miklakapi/go-file-share/internal/api/dto"
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
 	"github.com/Miklakapi/go-file-share/internal/app"
 	"github.com/gin-gonic/gin"
@@ -40,8 +41,13 @@ func (h *FilesHandler) Get(ctx *gin.Context) {
 		return
 	}
 
+	result := make([]dto.RoomFile, 0, len(files))
+	for _, f := range files {
+		result = append(result, dto.NewFileRoomFile(f))
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"data": files,
+		"data": result,
 	})
 }
 
@@ -70,7 +76,7 @@ func (h *FilesHandler) GetByUUID(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"data": file,
+		"data": dto.NewFileRoomFile(file),
 	})
 }
 
@@ -145,7 +151,7 @@ func (h *FilesHandler) Upload(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{
-		"data": file,
+		"data": dto.NewFileRoomFile(file),
 	})
 }
 

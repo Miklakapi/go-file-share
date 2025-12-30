@@ -13,15 +13,15 @@ export function useRoomDataTable(tableBodyElement, emptyElement) {
 
         for (const r of rooms) {
             const tr = document.createElement('tr')
-            tr.dataset.id = r.ID
+            tr.dataset.id = r.id
             tr.innerHTML = `
-              <td title="${r.ID}">${shortId(r.ID)}</td>
-              <td>${formatDate(r.ExpiresAt)}</td>
-              <td>${r.Files ?? 0}</td>
-              <td>${r.Tokens ?? 0}</td>
+              <td title="${r.id}">${shortId(r.id)}</td>
+              <td>${formatDate(r.expiresAt)}</td>
+              <td>${r.files ?? 0}</td>
+              <td>${r.tokens ?? 0}</td>
               <td class="right actions">
-                <button class="btn" data-action="enter" data-id="${r.ID}">Enter</button>
-                <button class="btn danger" data-action="delete" data-id="${r.ID}">Delete</button>
+                <button class="btn" data-action="enter" data-id="${r.id}">Enter</button>
+                <button class="btn danger" data-action="delete" data-id="${r.id}">Delete</button>
               </td>
             `
             tbody.appendChild(tr)

@@ -13,18 +13,18 @@ export function useFilesDataTable(tableBodyElement, emptyElement) {
 
         for (const f of files) {
             const tr = document.createElement('tr')
-            tr.dataset.id = f.ID
+            tr.dataset.id = f.id
 
-            const name = f.Name ?? ''
+            const name = f.name ?? ''
             const title = escapeAttr(name)
 
             tr.innerHTML = `
               <td title="${title}">${name}</td>
-              <td>${formatBytes(f.Size ?? 0)}</td>
-              <td>${formatDate(f.CreatedAt)}</td>
+              <td>${formatBytes(f.size ?? 0)}</td>
+              <td>${formatDate(f.createdAt)}</td>
               <td class="right actions">
-                <button class="btn" data-action="download" data-id="${f.ID}">Download</button>
-                <button class="btn danger" data-action="delete" data-id="${f.ID}">Delete</button>
+                <button class="btn" data-action="download" data-id="${f.id}">Download</button>
+                <button class="btn danger" data-action="delete" data-id="${f.id}">Delete</button>
               </td>
             `
             tbody.appendChild(tr)
