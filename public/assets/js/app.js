@@ -119,8 +119,7 @@ function wireEvents() {
             roomDataTable.disableRowButtons(id, false)
         }
         if (action === 'enter') {
-            if (!await rooms.checkAccess(id)) loginDialog.open(id)
-            else router.navigate(`/rooms/${id}`)
+            router.navigate(`/rooms/${id}`)
         }
     })
 
