@@ -9,6 +9,10 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	CtxTokenKey = "token"
+)
+
 func AuthMiddleware(deps *app.DependencyBag) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		roomIDAny, ok := ctx.Get(CtxRoomIDKey)
@@ -29,6 +33,7 @@ func AuthMiddleware(deps *app.DependencyBag) gin.HandlerFunc {
 			abortUnauthorized(ctx, `Bearer error="invalid_request", error_description="Expected Bearer token"`, "Unauthorized: invalid token format")
 			return
 		}
+		ctx.Set(CtxTokenKey, raw)
 
 		if err := deps.TokenService.ValidateWithRoom(deps.AppContext, roomID, token); err != nil {
 			www, msg := mapJWTError(err)
@@ -80,7 +85,7 @@ func abortUnauthorized(ctx *gin.Context, wwwAuth string, msg string) {
 	})
 }
 
-func mapJWTError(err error) (wwwAuth string, msg string) {
+func mapJWTError(_ error) (wwwAuth string, msg string) {
 	msg = "Unauthorized: invalid or expired token"
 
 	switch {

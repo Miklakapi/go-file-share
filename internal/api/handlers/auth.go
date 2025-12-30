@@ -46,20 +46,23 @@ func (h *AuthHandler) Auth(ctx *gin.Context) {
 	ctx.SetSameSite(http.SameSiteStrictMode)
 	ctx.SetCookie("auth_token", token, maxAge, cookiePath, "", false, true)
 
-	ctx.Status(http.StatusNoContent)
+	ctx.JSON(http.StatusOK, gin.H{
+		"data": token,
+	})
 }
 
 func (h *AuthHandler) Logout(ctx *gin.Context) {
 	roomIdAny, _ := ctx.Get(middleware.CtxRoomIDKey)
 	roomId := roomIdAny.(uuid.UUID)
 
-	token, err := ctx.Cookie("auth_token")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+	tokenAny, ok := ctx.Get(middleware.CtxTokenKey)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Missing auth token",
 		})
 		return
 	}
+	token := tokenAny.(string)
 
 	if err := h.Deps.FileShareService.LogoutRoom(h.Deps.AppContext, roomId, token); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})

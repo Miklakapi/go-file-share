@@ -23,13 +23,14 @@ func (h *FilesHandler) Get(ctx *gin.Context) {
 	roomIdAny, _ := ctx.Get(middleware.CtxRoomIDKey)
 	roomId := roomIdAny.(uuid.UUID)
 
-	token, err := ctx.Cookie("auth_token")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+	tokenAny, ok := ctx.Get(middleware.CtxTokenKey)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Missing auth token",
 		})
 		return
 	}
+	token := tokenAny.(string)
 
 	files, err := h.Deps.FileShareService.Files(h.Deps.AppContext, roomId, token)
 	if err != nil {
@@ -51,13 +52,14 @@ func (h *FilesHandler) GetByUUID(ctx *gin.Context) {
 	fileIdAny, _ := ctx.Get(middleware.CtxFileIDKey)
 	fileId := fileIdAny.(uuid.UUID)
 
-	token, err := ctx.Cookie("auth_token")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+	tokenAny, ok := ctx.Get(middleware.CtxTokenKey)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Missing auth token",
 		})
 		return
 	}
+	token := tokenAny.(string)
 
 	file, err := h.Deps.FileShareService.File(h.Deps.AppContext, roomId, fileId, token)
 	if err != nil {
@@ -79,13 +81,14 @@ func (h *FilesHandler) Download(ctx *gin.Context) {
 	fileIdAny, _ := ctx.Get(middleware.CtxFileIDKey)
 	fileId := fileIdAny.(uuid.UUID)
 
-	token, err := ctx.Cookie("auth_token")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+	tokenAny, ok := ctx.Get(middleware.CtxTokenKey)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Missing auth token",
 		})
 		return
 	}
+	token := tokenAny.(string)
 
 	meta, rc, err := h.Deps.FileShareService.DownloadFile(h.Deps.AppContext, roomId, fileId, token)
 	if err != nil {
@@ -112,13 +115,14 @@ func (h *FilesHandler) Upload(ctx *gin.Context) {
 	roomIdAny, _ := ctx.Get(middleware.CtxRoomIDKey)
 	roomId := roomIdAny.(uuid.UUID)
 
-	token, err := ctx.Cookie("auth_token")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+	tokenAny, ok := ctx.Get(middleware.CtxTokenKey)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Missing auth token",
 		})
 		return
 	}
+	token := tokenAny.(string)
 
 	fh, err := ctx.FormFile("file")
 	if err != nil {
@@ -152,13 +156,14 @@ func (h *FilesHandler) Delete(ctx *gin.Context) {
 	fileIdAny, _ := ctx.Get(middleware.CtxFileIDKey)
 	fileId := fileIdAny.(uuid.UUID)
 
-	token, err := ctx.Cookie("auth_token")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+	tokenAny, ok := ctx.Get(middleware.CtxTokenKey)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Missing auth token",
 		})
 		return
 	}
+	token := tokenAny.(string)
 
 	if err := h.Deps.FileShareService.DeleteFile(h.Deps.AppContext, roomId, fileId, token); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{

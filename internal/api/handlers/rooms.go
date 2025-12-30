@@ -29,7 +29,7 @@ func (h *RoomsHandler) Get(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"rooms": rooms,
+		"data": rooms,
 	})
 }
 
@@ -37,13 +37,14 @@ func (h *RoomsHandler) CheckAccess(ctx *gin.Context) {
 	roomIdAny, _ := ctx.Get(middleware.CtxRoomIDKey)
 	roomId := roomIdAny.(uuid.UUID)
 
-	token, err := ctx.Cookie("auth_token")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+	tokenAny, ok := ctx.Get(middleware.CtxTokenKey)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Missing auth token",
 		})
 		return
 	}
+	token := tokenAny.(string)
 
 	ok, err := h.Deps.FileShareService.CheckRoomAccess(h.Deps.AppContext, roomId, token)
 	if err != nil {
@@ -77,7 +78,7 @@ func (h *RoomsHandler) GetByUUID(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"room": room,
+		"data": room,
 	})
 }
 
@@ -108,7 +109,8 @@ func (h *RoomsHandler) Create(ctx *gin.Context) {
 	ctx.SetCookie("auth_token", token, int(duration.Seconds()), cookiePath, "", false, true)
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"room": room,
+		"data":  room,
+		"token": token,
 	})
 }
 
@@ -116,13 +118,14 @@ func (h *RoomsHandler) Delete(ctx *gin.Context) {
 	roomIdAny, _ := ctx.Get(middleware.CtxRoomIDKey)
 	roomId := roomIdAny.(uuid.UUID)
 
-	token, err := ctx.Cookie("auth_token")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+	tokenAny, ok := ctx.Get(middleware.CtxTokenKey)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Missing auth token",
 		})
 		return
 	}
+	token := tokenAny.(string)
 
 	if err := h.Deps.FileShareService.DeleteRoom(h.Deps.AppContext, roomId, token); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})

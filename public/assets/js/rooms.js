@@ -2,7 +2,7 @@ import { api } from "./helpers.js"
 
 export function useRooms() {
     async function get() {
-        const rooms = (await api('/rooms')).rooms
+        const rooms = (await api('/rooms')).data
         return rooms
     }
 
@@ -45,7 +45,7 @@ export function useRooms() {
             method: 'POST',
             body: JSON.stringify({ password, lifespan }),
         })
-        return response.room.ID
+        return response.data.ID
     }
 
     async function remove(id) {
