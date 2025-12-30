@@ -10,34 +10,30 @@ import (
 )
 
 type RedisRepo struct {
-	rooms map[uuid.UUID]*domain.FileRoom
+	rooms map[uuid.UUID]*domain.Room
 }
 
 var _ ports.RoomRepository = (*RedisRepo)(nil)
 
 func NewRedisRepo() *RedisRepo {
 	return &RedisRepo{
-		rooms: make(map[uuid.UUID]*domain.FileRoom),
+		rooms: make(map[uuid.UUID]*domain.Room),
 	}
 }
 
-func (r *RedisRepo) Get(ctx context.Context, roomID uuid.UUID) (*domain.FileRoom, bool, error) {
+func (r *RedisRepo) Get(ctx context.Context, roomID uuid.UUID) (*domain.Room, bool, error) {
 	panic("TODO")
 }
 
-func (r *RedisRepo) GetByToken(ctx context.Context, roomID uuid.UUID, token string) (*domain.FileRoom, bool, error) {
+func (r *RedisRepo) List(ctx context.Context) ([]*domain.Room, error) {
 	panic("TODO")
 }
 
-func (r *RedisRepo) ListSnapshots(ctx context.Context) ([]domain.RoomSnapshot, error) {
+func (r *RedisRepo) Create(ctx context.Context, room *domain.Room) error {
 	panic("TODO")
 }
 
-func (r *RedisRepo) Create(ctx context.Context, room *domain.FileRoom) error {
-	panic("TODO")
-}
-
-func (r *RedisRepo) Update(ctx context.Context, room *domain.FileRoom) error {
+func (r *RedisRepo) Update(ctx context.Context, room *domain.Room) error {
 	panic("TODO")
 }
 
@@ -53,15 +49,11 @@ func (r *RedisRepo) RemoveToken(ctx context.Context, roomID uuid.UUID, token str
 	panic("TODO")
 }
 
-func (r *RedisRepo) GetPasswordHash(ctx context.Context, roomID uuid.UUID) (hash string, ok bool, err error) {
-	panic("TODO")
-}
-
 func (r *RedisRepo) AddToken(ctx context.Context, roomID uuid.UUID, token string) error {
 	panic("TODO")
 }
 
-func (r *RedisRepo) AddFileByToken(ctx context.Context, roomID uuid.UUID, token string, file *domain.FileRoomFile) (bool, error) {
+func (r *RedisRepo) AddFileByToken(ctx context.Context, roomID uuid.UUID, token string, file *domain.RoomFile) (bool, error) {
 	panic("TODO")
 }
 

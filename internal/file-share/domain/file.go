@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type FileRoomFile struct {
+type RoomFile struct {
 	ID        uuid.UUID
 	Path      string
 	Name      string
@@ -15,14 +15,14 @@ type FileRoomFile struct {
 	CreatedAt time.Time
 }
 
-func NewFileRoomFile(path, name string, size int64, now time.Time) (*FileRoomFile, error) {
+func NewRoomFile(path, name string, size int64, now time.Time) (*RoomFile, error) {
 	if path == "" || name == "" || size <= 0 {
 		return nil, ErrInvalidFile
 	}
 
 	safeName := filepath.Base(name)
 
-	return &FileRoomFile{
+	return &RoomFile{
 		ID:        uuid.New(),
 		Path:      path,
 		Name:      safeName,

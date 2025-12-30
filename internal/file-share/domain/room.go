@@ -6,16 +6,16 @@ import (
 	"github.com/google/uuid"
 )
 
-type FileRoom struct {
+type Room struct {
 	ID        uuid.UUID
 	ExpiresAt time.Time
-	Files     map[uuid.UUID]*FileRoomFile
+	Files     map[uuid.UUID]*RoomFile
 
 	tokens   map[string]bool
 	password string
 }
 
-func NewFileRoom(hashedPassword string, lifespan time.Duration) (*FileRoom, error) {
+func NewRoom(hashedPassword string, lifespan time.Duration) (*Room, error) {
 	if hashedPassword == "" {
 		return nil, ErrEmptyPasswordHash
 	}
@@ -25,18 +25,18 @@ func NewFileRoom(hashedPassword string, lifespan time.Duration) (*FileRoom, erro
 
 	now := time.Now()
 
-	r := &FileRoom{
+	r := &Room{
 		ID:        uuid.New(),
 		ExpiresAt: now.Add(lifespan),
-		Files:     make(map[uuid.UUID]*FileRoomFile),
-		tokens:    make(map[string]bool),
+		Files:     make(map[uuid.UUID]*RoomFile),
+		tokens:    make(map[string]bool, 1),
 		password:  hashedPassword,
 	}
 
 	return r, nil
 }
 
-func (r *FileRoom) HasToken(token string) bool {
+func (r *Room) HasToken(token string) bool {
 	if token == "" || r.tokens == nil {
 		return false
 	}
@@ -44,7 +44,7 @@ func (r *FileRoom) HasToken(token string) bool {
 	return ok
 }
 
-func (r *FileRoom) AddToken(token string) error {
+func (r *Room) AddToken(token string) error {
 	if token == "" {
 		return ErrEmptyToken
 	}
@@ -55,7 +55,7 @@ func (r *FileRoom) AddToken(token string) error {
 	return nil
 }
 
-func (r *FileRoom) RemoveToken(token string) error {
+func (r *Room) RemoveToken(token string) error {
 	if token == "" {
 		return ErrEmptyToken
 	}
@@ -69,15 +69,15 @@ func (r *FileRoom) RemoveToken(token string) error {
 	return nil
 }
 
-func (r *FileRoom) TokensCount() int {
+func (r *Room) TokensCount() int {
 	return len(r.tokens)
 }
 
-func (r *FileRoom) Password() string {
+func (r *Room) Password() string {
 	return r.password
 }
 
-func (r *FileRoom) GetFile(id uuid.UUID) (*FileRoomFile, bool) {
+func (r *Room) GetFile(id uuid.UUID) (*RoomFile, bool) {
 	if r.Files == nil {
 		return nil, false
 	}
@@ -85,29 +85,29 @@ func (r *FileRoom) GetFile(id uuid.UUID) (*FileRoomFile, bool) {
 	return file, ok
 }
 
-func (r *FileRoom) ListFiles() []*FileRoomFile {
+func (r *Room) ListFiles() []*RoomFile {
 	if r.Files == nil {
 		return nil
 	}
-	files := make([]*FileRoomFile, 0, len(r.Files))
+	files := make([]*RoomFile, 0, len(r.Files))
 	for _, f := range r.Files {
 		files = append(files, f)
 	}
 	return files
 }
 
-func (r *FileRoom) AddFile(file *FileRoomFile) error {
+func (r *Room) AddFile(file *RoomFile) error {
 	if file == nil {
 		return ErrInvalidFile
 	}
 	if r.Files == nil {
-		r.Files = make(map[uuid.UUID]*FileRoomFile)
+		r.Files = make(map[uuid.UUID]*RoomFile)
 	}
 	r.Files[file.ID] = file
 	return nil
 }
 
-func (r *FileRoom) DeleteFile(id uuid.UUID) (*FileRoomFile, error) {
+func (r *Room) DeleteFile(id uuid.UUID) (*RoomFile, error) {
 	if r.Files == nil {
 		return nil, ErrFileNotFound
 	}
@@ -121,19 +121,19 @@ func (r *FileRoom) DeleteFile(id uuid.UUID) (*FileRoomFile, error) {
 	return file, nil
 }
 
-func (r *FileRoom) IsExpired(now time.Time) bool {
+func (r *Room) IsExpired(now time.Time) bool {
 	return now.After(r.ExpiresAt)
 }
 
-func (r *FileRoom) Clone() *FileRoom {
+func (r *Room) Clone() *Room {
 	if r == nil {
 		return nil
 	}
 
-	cp := &FileRoom{
+	cp := &Room{
 		ID:        r.ID,
 		ExpiresAt: r.ExpiresAt,
-		Files:     make(map[uuid.UUID]*FileRoomFile, len(r.Files)),
+		Files:     make(map[uuid.UUID]*RoomFile, len(r.Files)),
 		tokens:    make(map[string]bool, len(r.tokens)),
 		password:  r.password,
 	}

@@ -32,27 +32,20 @@ func NewService(rooms ports.RoomRepository, files ports.FileStore, hasher ports.
 	}
 }
 
-func (s *Service) Room(ctx context.Context, id uuid.UUID) (domain.RoomSnapshot, bool, error) {
+func (s *Service) Room(ctx context.Context, id uuid.UUID) (*domain.Room, bool, error) {
 	if err := ctx.Err(); err != nil {
-		return domain.RoomSnapshot{}, false, err
+		return nil, false, err
 	}
 
 	room, ok, err := s.rooms.Get(ctx, id)
 	if err != nil {
-		return domain.RoomSnapshot{}, false, err
+		return nil, false, err
 	}
 	if !ok || room == nil {
-		return domain.RoomSnapshot{}, false, nil
+		return nil, false, nil
 	}
 
-	snap := domain.RoomSnapshot{
-		ID:        room.ID,
-		ExpiresAt: room.ExpiresAt,
-		Files:     len(room.Files),
-		Tokens:    room.TokensCount(),
-	}
-
-	return snap, true, nil
+	return room, true, nil
 }
 
 func (s *Service) CheckRoomAccess(ctx context.Context, id uuid.UUID, token string) (bool, error) {
@@ -60,72 +53,65 @@ func (s *Service) CheckRoomAccess(ctx context.Context, id uuid.UUID, token strin
 		return false, err
 	}
 
-	room, ok, err := s.rooms.GetByToken(ctx, id, token)
+	room, ok, err := s.rooms.Get(ctx, id)
 	if err != nil {
 		return false, err
 	}
-	if !ok || room == nil {
+	if !ok || room == nil || !room.HasToken(token) {
 		return false, nil
 	}
 
 	return true, nil
 }
 
-func (s *Service) Rooms(ctx context.Context) ([]domain.RoomSnapshot, error) {
+func (s *Service) Rooms(ctx context.Context) ([]*domain.Room, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
 
-	return s.rooms.ListSnapshots(ctx)
+	return s.rooms.List(ctx)
 }
 
-func (s *Service) CreateRoom(ctx context.Context, password string, lifespan time.Duration) (domain.RoomSnapshot, string, error) {
+func (s *Service) CreateRoom(ctx context.Context, password string, lifespan time.Duration) (*domain.Room, string, error) {
 	if err := ctx.Err(); err != nil {
-		return domain.RoomSnapshot{}, "", err
+		return nil, "", err
 	}
 
 	password = strings.TrimSpace(password)
 	if password == "" {
-		return domain.RoomSnapshot{}, "", domain.ErrEmptyPassword
+		return nil, "", domain.ErrEmptyPassword
 	}
 
 	if lifespan <= 0 {
 		lifespan = s.policy.DefaultRoomTTL
 	}
 	if s.policy.MaxRoomLifespan > 0 && lifespan > s.policy.MaxRoomLifespan {
-		return domain.RoomSnapshot{}, "", domain.ErrRoomLifespanTooLong
+		return nil, "", domain.ErrRoomLifespanTooLong
 	}
 
 	hashedPassword, err := s.hasher.Hash(password)
 	if err != nil {
-		return domain.RoomSnapshot{}, "", err
+		return nil, "", err
 	}
 
-	room, err := domain.NewFileRoom(hashedPassword, lifespan)
+	room, err := domain.NewRoom(hashedPassword, lifespan)
 	if err != nil {
-		return domain.RoomSnapshot{}, "", err
+		return nil, "", err
 	}
 
 	token, _, err := s.tokenIssuer.Issue(ctx, room.ID, lifespan)
 	if err != nil {
-		return domain.RoomSnapshot{}, "", err
+		return nil, "", err
 	}
 	if err := room.AddToken(token); err != nil {
-		return domain.RoomSnapshot{}, "", err
+		return nil, "", err
 	}
 
 	if err := s.rooms.Create(ctx, room); err != nil {
-		return domain.RoomSnapshot{}, "", err
+		return nil, "", err
 	}
 
-	snap := domain.RoomSnapshot{
-		ID:        room.ID,
-		ExpiresAt: room.ExpiresAt,
-		Files:     0,
-		Tokens:    1,
-	}
-
-	return snap, token, nil
+	return room, token, nil
 }
 
 func (s *Service) DeleteRoom(ctx context.Context, id uuid.UUID, token string) error {
@@ -138,11 +124,11 @@ func (s *Service) DeleteRoom(ctx context.Context, id uuid.UUID, token string) er
 		return domain.ErrEmptyToken
 	}
 
-	room, ok, err := s.rooms.GetByToken(ctx, id, token)
+	room, ok, err := s.rooms.Get(ctx, id)
 	if err != nil {
 		return err
 	}
-	if !ok || room == nil {
+	if !ok || room == nil || !room.HasToken(token) {
 		return domain.ErrRoomNotFound
 	}
 
@@ -164,7 +150,7 @@ func (s *Service) DeleteRoom(ctx context.Context, id uuid.UUID, token string) er
 	return joined
 }
 
-func (s *Service) AuthRoom(ctx context.Context, id uuid.UUID, password string, lifespan time.Duration) (token string, expiresAt time.Time, err error) {
+func (s *Service) AuthRoom(ctx context.Context, id uuid.UUID, password string, lifespan time.Duration) (string, time.Time, error) {
 	if err := ctx.Err(); err != nil {
 		return "", time.Time{}, err
 	}
@@ -181,19 +167,20 @@ func (s *Service) AuthRoom(ctx context.Context, id uuid.UUID, password string, l
 		return "", time.Time{}, domain.ErrTokenLifespanTooLong
 	}
 
-	hash, ok, err := s.rooms.GetPasswordHash(ctx, id)
+	room, ok, err := s.rooms.Get(ctx, id)
 	if err != nil {
 		return "", time.Time{}, err
 	}
-	if !ok || hash == "" {
+	if !ok || room == nil {
 		return "", time.Time{}, domain.ErrRoomNotFound
 	}
 
+	hash := room.Password()
 	if !s.hasher.Verify(password, hash) {
 		return "", time.Time{}, domain.ErrInvalidPassword
 	}
 
-	token, expiresAt, err = s.tokenIssuer.Issue(ctx, id, lifespan)
+	token, expiresAt, err := s.tokenIssuer.Issue(ctx, id, lifespan)
 	if err != nil {
 		return "", time.Time{}, err
 	}
@@ -226,64 +213,7 @@ func (s *Service) LogoutRoom(ctx context.Context, id uuid.UUID, token string) er
 	return nil
 }
 
-func (s *Service) File(ctx context.Context, roomId, fileId uuid.UUID, token string) (domain.FileRoomFile, error) {
-	if err := ctx.Err(); err != nil {
-		return domain.FileRoomFile{}, err
-	}
-
-	token = strings.TrimSpace(token)
-	if token == "" {
-		return domain.FileRoomFile{}, domain.ErrEmptyToken
-	}
-
-	room, ok, err := s.rooms.GetByToken(ctx, roomId, token)
-	if err != nil {
-		return domain.FileRoomFile{}, err
-	}
-	if !ok || room == nil {
-		return domain.FileRoomFile{}, domain.ErrRoomNotFound
-	}
-
-	f, ok := room.GetFile(fileId)
-	if !ok || f == nil {
-		return domain.FileRoomFile{}, domain.ErrFileNotFound
-	}
-
-	return *f, nil
-}
-
-func (s *Service) DownloadFile(ctx context.Context, roomId, fileId uuid.UUID, token string) (domain.FileRoomFile, io.ReadCloser, error) {
-	if err := ctx.Err(); err != nil {
-		return domain.FileRoomFile{}, nil, err
-	}
-
-	token = strings.TrimSpace(token)
-	if token == "" {
-		return domain.FileRoomFile{}, nil, domain.ErrEmptyToken
-	}
-
-	room, ok, err := s.rooms.GetByToken(ctx, roomId, token)
-	if err != nil {
-		return domain.FileRoomFile{}, nil, err
-	}
-	if !ok || room == nil {
-		return domain.FileRoomFile{}, nil, domain.ErrRoomNotFound
-	}
-
-	file, ok := room.GetFile(fileId)
-	if !ok || file == nil {
-		return domain.FileRoomFile{}, nil, domain.ErrFileNotFound
-	}
-
-	rc, err := s.files.Open(ctx, file.Path)
-	if err != nil {
-		return domain.FileRoomFile{}, nil, err
-	}
-
-	return *file, rc, nil
-}
-
-func (s *Service) Files(ctx context.Context, id uuid.UUID, token string) ([]domain.FileRoomFile, error) {
+func (s *Service) File(ctx context.Context, roomId, fileId uuid.UUID, token string) (*domain.RoomFile, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -293,68 +223,116 @@ func (s *Service) Files(ctx context.Context, id uuid.UUID, token string) ([]doma
 		return nil, domain.ErrEmptyToken
 	}
 
-	room, ok, err := s.rooms.GetByToken(ctx, id, token)
+	room, ok, err := s.rooms.Get(ctx, roomId)
 	if err != nil {
 		return nil, err
 	}
-	if !ok || room == nil {
+	if !ok || room == nil || !room.HasToken(token) {
 		return nil, domain.ErrRoomNotFound
 	}
 
-	files := room.ListFiles()
-
-	out := make([]domain.FileRoomFile, 0, len(files))
-	for _, f := range files {
-		if f == nil {
-			continue
-		}
-		out = append(out, *f)
+	f, ok := room.GetFile(fileId)
+	if !ok || f == nil {
+		return nil, domain.ErrFileNotFound
 	}
 
-	return out, nil
+	return f, nil
 }
 
-func (s *Service) UploadFile(ctx context.Context, roomId uuid.UUID, token string, filename string, r io.Reader) (domain.FileRoomFile, error) {
+func (s *Service) DownloadFile(ctx context.Context, roomId, fileId uuid.UUID, token string) (*domain.RoomFile, io.ReadCloser, error) {
 	if err := ctx.Err(); err != nil {
-		return domain.FileRoomFile{}, err
+		return nil, nil, err
 	}
 
 	token = strings.TrimSpace(token)
 	if token == "" {
-		return domain.FileRoomFile{}, domain.ErrEmptyToken
+		return nil, nil, domain.ErrEmptyToken
+	}
+
+	room, ok, err := s.rooms.Get(ctx, roomId)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !ok || room == nil || !room.HasToken(token) {
+		return nil, nil, domain.ErrRoomNotFound
+	}
+
+	file, ok := room.GetFile(fileId)
+	if !ok || file == nil {
+		return nil, nil, domain.ErrFileNotFound
+	}
+
+	rc, err := s.files.Open(ctx, file.Path)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return file, rc, nil
+}
+
+func (s *Service) Files(ctx context.Context, id uuid.UUID, token string) ([]*domain.RoomFile, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return nil, domain.ErrEmptyToken
+	}
+
+	room, ok, err := s.rooms.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if !ok || room == nil || !room.HasToken(token) {
+		return nil, domain.ErrRoomNotFound
+	}
+
+	files := room.ListFiles()
+	return files, nil
+}
+
+func (s *Service) UploadFile(ctx context.Context, roomId uuid.UUID, token string, filename string, r io.Reader) (*domain.RoomFile, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return nil, domain.ErrEmptyToken
 	}
 
 	filename = strings.TrimSpace(filename)
 	if filename == "" {
-		return domain.FileRoomFile{}, ports.ErrEmptyFilename
+		return nil, ports.ErrEmptyFilename
 	}
 	if r == nil {
-		return domain.FileRoomFile{}, ports.ErrNilReader
+		return nil, ports.ErrNilReader
 	}
 
 	path, size, err := s.files.Save(ctx, s.policy.UploadDir, filename, r)
 	if err != nil {
-		return domain.FileRoomFile{}, err
+		return nil, err
 	}
 
 	now := s.now()
-	meta, err := domain.NewFileRoomFile(path, filename, size, now)
+	meta, err := domain.NewRoomFile(path, filename, size, now)
 	if err != nil {
 		_ = s.files.Delete(ctx, path)
-		return domain.FileRoomFile{}, err
+		return nil, err
 	}
 
 	ok, err := s.rooms.AddFileByToken(ctx, roomId, token, meta)
 	if err != nil {
 		_ = s.files.Delete(ctx, path)
-		return domain.FileRoomFile{}, err
+		return nil, err
 	}
 	if !ok {
 		_ = s.files.Delete(ctx, path)
-		return domain.FileRoomFile{}, domain.ErrRoomNotFound
+		return nil, domain.ErrRoomNotFound
 	}
 
-	return *meta, nil
+	return meta, nil
 }
 
 func (s *Service) DeleteFile(ctx context.Context, roomId, fileId uuid.UUID, token string) error {

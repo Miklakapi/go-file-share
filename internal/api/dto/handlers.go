@@ -23,12 +23,12 @@ type Room struct {
 	Tokens    int       `json:"tokens"`
 }
 
-func NewRoom(s domain.RoomSnapshot) Room {
+func NewRoom(s *domain.Room) Room {
 	return Room{
 		ID:        s.ID,
 		ExpiresAt: s.ExpiresAt,
-		Files:     s.Files,
-		Tokens:    s.Tokens,
+		Files:     len(s.Files),
+		Tokens:    s.TokensCount(),
 	}
 }
 
@@ -40,7 +40,7 @@ type RoomFile struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func NewFileRoomFile(s domain.FileRoomFile) RoomFile {
+func NewFileRoomFile(s *domain.RoomFile) RoomFile {
 	return RoomFile{
 		ID:        s.ID,
 		Path:      s.Path,

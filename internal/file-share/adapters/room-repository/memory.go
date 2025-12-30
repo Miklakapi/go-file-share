@@ -12,58 +12,38 @@ import (
 
 type MemoryRepo struct {
 	mu    sync.RWMutex
-	rooms map[uuid.UUID]*domain.FileRoom
+	rooms map[uuid.UUID]*domain.Room
 }
 
 var _ ports.RoomRepository = (*MemoryRepo)(nil)
 
 func NewMemoryRepo() *MemoryRepo {
 	return &MemoryRepo{
-		rooms: make(map[uuid.UUID]*domain.FileRoom),
+		rooms: make(map[uuid.UUID]*domain.Room),
 	}
 }
 
-func (r *MemoryRepo) Get(ctx context.Context, roomID uuid.UUID) (*domain.FileRoom, bool, error) {
+func (r *MemoryRepo) Get(ctx context.Context, roomID uuid.UUID) (*domain.Room, bool, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, false, err
 	}
 
 	r.mu.RLock()
 	room, ok := r.rooms[roomID]
+	var cp *domain.Room
+	if ok && room != nil {
+		cp = room.Clone()
+	}
 	r.mu.RUnlock()
 
-	if !ok || room == nil {
+	if cp == nil {
 		return nil, false, nil
 	}
 
-	return cloneRoom(room), true, nil
+	return cp, true, nil
 }
 
-func (r *MemoryRepo) GetByToken(ctx context.Context, roomID uuid.UUID, token string) (*domain.FileRoom, bool, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, false, err
-	}
-
-	if token == "" {
-		return nil, false, nil
-	}
-
-	r.mu.RLock()
-	room, ok := r.rooms[roomID]
-	r.mu.RUnlock()
-
-	if !ok || room == nil {
-		return nil, false, nil
-	}
-
-	if !room.HasToken(token) {
-		return nil, false, nil
-	}
-
-	return cloneRoom(room), true, nil
-}
-
-func (r *MemoryRepo) ListSnapshots(ctx context.Context) ([]domain.RoomSnapshot, error) {
+func (r *MemoryRepo) List(ctx context.Context) ([]*domain.Room, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -71,23 +51,17 @@ func (r *MemoryRepo) ListSnapshots(ctx context.Context) ([]domain.RoomSnapshot, 
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	out := make([]domain.RoomSnapshot, 0, len(r.rooms))
+	out := make([]*domain.Room, 0, len(r.rooms))
 	for _, room := range r.rooms {
 		if room == nil {
 			continue
 		}
-		out = append(out, domain.RoomSnapshot{
-			ID:        room.ID,
-			ExpiresAt: room.ExpiresAt,
-			Files:     len(room.Files),
-			Tokens:    room.TokensCount(),
-		})
+		out = append(out, room.Clone())
 	}
-
 	return out, nil
 }
 
-func (r *MemoryRepo) Create(ctx context.Context, room *domain.FileRoom) error {
+func (r *MemoryRepo) Create(ctx context.Context, room *domain.Room) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -106,7 +80,7 @@ func (r *MemoryRepo) Create(ctx context.Context, room *domain.FileRoom) error {
 	return nil
 }
 
-func (r *MemoryRepo) Update(ctx context.Context, room *domain.FileRoom) error {
+func (r *MemoryRepo) Update(ctx context.Context, room *domain.Room) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -225,22 +199,6 @@ func (r *MemoryRepo) RemoveToken(ctx context.Context, roomID uuid.UUID, token st
 	return true, nil
 }
 
-func (r *MemoryRepo) GetPasswordHash(ctx context.Context, roomID uuid.UUID) (hash string, ok bool, err error) {
-	if err := ctx.Err(); err != nil {
-		return "", false, err
-	}
-
-	r.mu.RLock()
-	room, ok := r.rooms[roomID]
-	r.mu.RUnlock()
-
-	if !ok || room == nil {
-		return "", false, nil
-	}
-
-	return room.Password(), true, nil
-}
-
 func (r *MemoryRepo) AddToken(ctx context.Context, roomID uuid.UUID, token string) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -261,7 +219,7 @@ func (r *MemoryRepo) AddToken(ctx context.Context, roomID uuid.UUID, token strin
 	return room.AddToken(token)
 }
 
-func (r *MemoryRepo) AddFileByToken(ctx context.Context, roomID uuid.UUID, token string, file *domain.FileRoomFile) (bool, error) {
+func (r *MemoryRepo) AddFileByToken(ctx context.Context, roomID uuid.UUID, token string, file *domain.RoomFile) (bool, error) {
 	if err := ctx.Err(); err != nil {
 		return false, err
 	}
@@ -283,7 +241,7 @@ func (r *MemoryRepo) AddFileByToken(ctx context.Context, roomID uuid.UUID, token
 
 	cp := *file
 	if room.Files == nil {
-		room.Files = make(map[uuid.UUID]*domain.FileRoomFile)
+		room.Files = make(map[uuid.UUID]*domain.RoomFile)
 	}
 	room.Files[cp.ID] = &cp
 
@@ -316,30 +274,4 @@ func (r *MemoryRepo) DeleteFileByToken(ctx context.Context, roomID, fileID uuid.
 	delete(room.Files, fileID)
 
 	return path, true, nil
-}
-
-func cloneRoom(src *domain.FileRoom) *domain.FileRoom {
-	if src == nil {
-		return nil
-	}
-
-	dst := &domain.FileRoom{
-		ID:        src.ID,
-		ExpiresAt: src.ExpiresAt,
-		Files:     make(map[uuid.UUID]*domain.FileRoomFile, len(src.Files)),
-	}
-
-	for id, f := range src.Files {
-		dst.Files[id] = cloneFile(f)
-	}
-
-	return dst
-}
-
-func cloneFile(f *domain.FileRoomFile) *domain.FileRoomFile {
-	if f == nil {
-		return nil
-	}
-	cp := *f
-	return &cp
 }
