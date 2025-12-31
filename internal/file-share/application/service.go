@@ -310,7 +310,8 @@ func (s *Service) UploadFile(ctx context.Context, roomId uuid.UUID, token string
 		return nil, ports.ErrNilReader
 	}
 
-	path, size, err := s.files.Save(ctx, s.policy.UploadDir, filename, r)
+	uuid := uuid.New()
+	path, size, err := s.files.Save(ctx, s.policy.UploadDir, uuid.String(), r)
 	if err != nil {
 		return nil, err
 	}
