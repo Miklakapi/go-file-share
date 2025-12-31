@@ -108,6 +108,27 @@ func (DiskStore) Open(ctx context.Context, path string) (io.ReadCloser, error) {
 	return os.Open(path)
 }
 
+func (DiskStore) Exists(ctx context.Context, path string) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+
+	if path == "" {
+		return false, os.ErrNotExist
+	}
+
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+
+	return false, err
+}
+
 func (DiskStore) Delete(ctx context.Context, path string) error {
 	if err := ctx.Err(); err != nil {
 		return err
