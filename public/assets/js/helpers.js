@@ -1,4 +1,4 @@
-export async function api(path, options = {}) {
+export async function api(path, options = {}, timeout = 10000) {
     const url = '/api/v1' + path
     const isFormData = options?.body instanceof FormData
     const wantsBlob = options?.responseType === 'blob'
@@ -8,11 +8,17 @@ export async function api(path, options = {}) {
         headers.set('Content-Type', 'application/json')
     }
 
-    const res = await fetch(url, {
-        credentials: 'include',
-        headers,
-        ...options,
-    })
+    let res
+    try {
+        res = await fetch(url, {
+            credentials: 'include',
+            headers,
+            ...options,
+            signal: AbortSignal.timeout(timeout)
+        })
+    } catch {
+        throw Error('Request timeout')
+    }
 
     if (!res.ok) {
         let message = res.statusText
