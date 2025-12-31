@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/Miklakapi/go-file-share/internal/api"
-	"github.com/Miklakapi/go-file-share/internal/api/handlers"
+	"github.com/Miklakapi/go-file-share/internal/api/controllers"
+	"github.com/Miklakapi/go-file-share/internal/api/middleware"
 	"github.com/Miklakapi/go-file-share/internal/app"
 	"github.com/Miklakapi/go-file-share/internal/config"
 	filestore "github.com/Miklakapi/go-file-share/internal/file-share/adapters/file-store"
@@ -38,12 +39,13 @@ func main() {
 	engine := gin.New()
 	engine.Use(gin.Logger(), gin.Recovery())
 
-	api.RegisterRoutes(engine, deps, &api.Handlers{
-		HealthHandler: handlers.NewHealthHandler(deps),
-		PagesHandler:  handlers.NewPagesHandler(deps),
-		RoomsHandler:  handlers.NewRoomsHandler(deps),
-		AuthHandler:   handlers.NewAuthHandler(deps),
-		FilesHandler:  handlers.NewFilesHandler(deps),
+	api.RegisterRoutes(engine, &api.ControllerBag{
+		HealthController: controllers.NewHealthController(deps),
+		HtmlController:   controllers.NewHtmlController(deps),
+		AuthController:   controllers.NewAuthController(deps),
+		RoomsController:  controllers.NewRoomsController(deps),
+		FilesController:  controllers.NewFilesController(deps),
+		AuthMiddleware:   middleware.AuthMiddleware(deps),
 	})
 
 	srv := &http.Server{

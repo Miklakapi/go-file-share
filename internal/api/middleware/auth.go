@@ -45,6 +45,12 @@ func AuthMiddleware(deps *app.DependencyBag) gin.HandlerFunc {
 	}
 }
 
+func MustToken(ctx *gin.Context) string {
+	tokenAny := ctx.MustGet(CtxTokenKey)
+	token := tokenAny.(string)
+	return token
+}
+
 func extractAuthToken(ctx *gin.Context) (raw string, source string) {
 	raw = strings.TrimSpace(ctx.GetHeader("Authorization"))
 	if raw != "" {

@@ -13,12 +13,24 @@ const (
 	CtxFileIDKey = "fileID"
 )
 
-func RoomIDParam() gin.HandlerFunc {
+func SetRoomIDParam() gin.HandlerFunc {
 	return UUIDParam(CtxRoomIDKey, CtxRoomIDKey)
 }
 
-func FileIDParam() gin.HandlerFunc {
+func MustRoomIDParam(ctx *gin.Context) uuid.UUID {
+	roomIdAny := ctx.MustGet(CtxRoomIDKey)
+	roomId := roomIdAny.(uuid.UUID)
+	return roomId
+}
+
+func SetFileIDParam() gin.HandlerFunc {
 	return UUIDParam(CtxFileIDKey, CtxFileIDKey)
+}
+
+func MustFileIDParam(ctx *gin.Context) uuid.UUID {
+	fileIdAny := ctx.MustGet(CtxFileIDKey)
+	fileId := fileIdAny.(uuid.UUID)
+	return fileId
 }
 
 func UUIDParam(paramName string, ctxKey string) gin.HandlerFunc {

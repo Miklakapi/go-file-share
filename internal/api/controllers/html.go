@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"net/http"
@@ -10,19 +10,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type PagesHandler struct {
+type HtmlController struct {
 	Deps *app.DependencyBag
 }
 
-func NewPagesHandler(deps *app.DependencyBag) *PagesHandler {
-	return &PagesHandler{Deps: deps}
+func NewHtmlController(deps *app.DependencyBag) *HtmlController {
+	return &HtmlController{Deps: deps}
 }
 
-func (h *PagesHandler) Index(ctx *gin.Context) {
+func (h *HtmlController) Index(ctx *gin.Context) {
 	h.serveIndex(ctx)
 }
 
-func (h *PagesHandler) SPAFallback(ctx *gin.Context) {
+func (h *HtmlController) SPAFallback(ctx *gin.Context) {
 	path := ctx.Request.URL.Path
 
 	if strings.HasPrefix(path, "/api/") {
@@ -31,7 +31,6 @@ func (h *PagesHandler) SPAFallback(ctx *gin.Context) {
 	}
 
 	publicDir := h.Deps.Config.PublicDir
-
 	fullPath := filepath.Join(publicDir, filepath.Clean(path))
 	if fileExists(fullPath) {
 		ctx.File(fullPath)
@@ -41,7 +40,15 @@ func (h *PagesHandler) SPAFallback(ctx *gin.Context) {
 	h.serveIndex(ctx)
 }
 
-func (h *PagesHandler) serveIndex(ctx *gin.Context) {
+func (h *HtmlController) Assets() string {
+	return h.Deps.Config.PublicDir + "/assets"
+}
+
+func (h *HtmlController) Favicon() string {
+	return h.Deps.Config.PublicDir + "/favicon.ico"
+}
+
+func (h *HtmlController) serveIndex(ctx *gin.Context) {
 	indexPath := filepath.Join(h.Deps.Config.PublicDir, "index.html")
 
 	if !fileExists(indexPath) {

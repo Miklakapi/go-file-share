@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"net/http"
@@ -9,20 +9,18 @@ import (
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
 	"github.com/Miklakapi/go-file-share/internal/app"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
-type AuthHandler struct {
+type AuthController struct {
 	Deps *app.DependencyBag
 }
 
-func NewAuthHandler(deps *app.DependencyBag) *AuthHandler {
-	return &AuthHandler{Deps: deps}
+func NewAuthController(deps *app.DependencyBag) *AuthController {
+	return &AuthController{Deps: deps}
 }
 
-func (h *AuthHandler) Auth(ctx *gin.Context) {
-	roomIdAny, _ := ctx.Get(middleware.CtxRoomIDKey)
-	roomId := roomIdAny.(uuid.UUID)
+func (h *AuthController) Auth(ctx *gin.Context) {
+	roomId := middleware.MustRoomIDParam(ctx)
 
 	requestData := dto.AuthRoomRequest{}
 	if err := ctx.ShouldBind(&requestData); err != nil {
@@ -51,18 +49,9 @@ func (h *AuthHandler) Auth(ctx *gin.Context) {
 	})
 }
 
-func (h *AuthHandler) Logout(ctx *gin.Context) {
-	roomIdAny, _ := ctx.Get(middleware.CtxRoomIDKey)
-	roomId := roomIdAny.(uuid.UUID)
-
-	tokenAny, ok := ctx.Get(middleware.CtxTokenKey)
-	if !ok {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"message": "Missing auth token",
-		})
-		return
-	}
-	token := tokenAny.(string)
+func (h *AuthController) Logout(ctx *gin.Context) {
+	roomId := middleware.MustRoomIDParam(ctx)
+	token := middleware.MustToken(ctx)
 
 	if err := h.Deps.FileShareService.LogoutRoom(h.Deps.AppContext, roomId, token); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})

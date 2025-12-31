@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"net/http"
@@ -9,18 +9,17 @@ import (
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
 	"github.com/Miklakapi/go-file-share/internal/app"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
-type RoomsHandler struct {
+type RoomsController struct {
 	Deps *app.DependencyBag
 }
 
-func NewRoomsHandler(deps *app.DependencyBag) *RoomsHandler {
-	return &RoomsHandler{Deps: deps}
+func NewRoomsController(deps *app.DependencyBag) *RoomsController {
+	return &RoomsController{Deps: deps}
 }
 
-func (h *RoomsHandler) Get(ctx *gin.Context) {
+func (h *RoomsController) Get(ctx *gin.Context) {
 	rooms, err := h.Deps.FileShareService.Rooms(h.Deps.AppContext)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -38,18 +37,9 @@ func (h *RoomsHandler) Get(ctx *gin.Context) {
 	})
 }
 
-func (h *RoomsHandler) CheckAccess(ctx *gin.Context) {
-	roomIdAny, _ := ctx.Get(middleware.CtxRoomIDKey)
-	roomId := roomIdAny.(uuid.UUID)
-
-	tokenAny, ok := ctx.Get(middleware.CtxTokenKey)
-	if !ok {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"message": "Missing auth token",
-		})
-		return
-	}
-	token := tokenAny.(string)
+func (h *RoomsController) CheckAccess(ctx *gin.Context) {
+	roomId := middleware.MustRoomIDParam(ctx)
+	token := middleware.MustToken(ctx)
 
 	ok, err := h.Deps.FileShareService.CheckRoomAccess(h.Deps.AppContext, roomId, token)
 	if err != nil {
@@ -66,9 +56,8 @@ func (h *RoomsHandler) CheckAccess(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-func (h *RoomsHandler) GetByUUID(ctx *gin.Context) {
-	roomIdAny, _ := ctx.Get(middleware.CtxRoomIDKey)
-	roomId := roomIdAny.(uuid.UUID)
+func (h *RoomsController) GetByUUID(ctx *gin.Context) {
+	roomId := middleware.MustRoomIDParam(ctx)
 
 	room, ok, err := h.Deps.FileShareService.Room(h.Deps.AppContext, roomId)
 	if err != nil {
@@ -87,7 +76,7 @@ func (h *RoomsHandler) GetByUUID(ctx *gin.Context) {
 	})
 }
 
-func (h *RoomsHandler) Create(ctx *gin.Context) {
+func (h *RoomsController) Create(ctx *gin.Context) {
 	requestData := dto.CreateRoomRequest{}
 
 	if err := ctx.ShouldBind(&requestData); err != nil {
@@ -119,18 +108,9 @@ func (h *RoomsHandler) Create(ctx *gin.Context) {
 	})
 }
 
-func (h *RoomsHandler) Delete(ctx *gin.Context) {
-	roomIdAny, _ := ctx.Get(middleware.CtxRoomIDKey)
-	roomId := roomIdAny.(uuid.UUID)
-
-	tokenAny, ok := ctx.Get(middleware.CtxTokenKey)
-	if !ok {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"message": "Missing auth token",
-		})
-		return
-	}
-	token := tokenAny.(string)
+func (h *RoomsController) Delete(ctx *gin.Context) {
+	roomId := middleware.MustRoomIDParam(ctx)
+	token := middleware.MustToken(ctx)
 
 	if err := h.Deps.FileShareService.DeleteRoom(h.Deps.AppContext, roomId, token); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
