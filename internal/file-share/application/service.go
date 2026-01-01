@@ -89,7 +89,7 @@ func (s *Service) CreateRoom(ctx context.Context, password string, lifespan time
 		return nil, "", domain.ErrRoomLifespanTooLong
 	}
 
-	hashedPassword, err := s.hasher.Hash(password)
+	hashedPassword, err := s.hasher.Hash(ctx, password)
 	if err != nil {
 		return nil, "", err
 	}
@@ -176,7 +176,11 @@ func (s *Service) AuthRoom(ctx context.Context, id uuid.UUID, password string, l
 	}
 
 	hash := room.Password()
-	if !s.hasher.Verify(password, hash) {
+	ok, err = s.hasher.Verify(ctx, password, hash)
+	if err != nil {
+		return "", time.Time{}, err
+	}
+	if !ok {
 		return "", time.Time{}, domain.ErrInvalidPassword
 	}
 

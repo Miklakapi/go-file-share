@@ -35,7 +35,7 @@ func AuthMiddleware(deps *app.DependencyBag) gin.HandlerFunc {
 		}
 		ctx.Set(CtxTokenKey, raw)
 
-		if err := deps.TokenService.ValidateWithRoom(deps.AppContext, roomID, token); err != nil {
+		if err := deps.TokenService.ValidateWithRoom(ctx.Request.Context(), roomID, token); err != nil {
 			www, msg := mapJWTError(err)
 			abortUnauthorized(ctx, www, msg)
 			return

@@ -1,8 +1,6 @@
 package app
 
 import (
-	"context"
-
 	"github.com/Miklakapi/go-file-share/internal/config"
 	fileShare "github.com/Miklakapi/go-file-share/internal/file-share/application"
 	fileShareDomain "github.com/Miklakapi/go-file-share/internal/file-share/domain"
@@ -10,8 +8,7 @@ import (
 )
 
 type DependencyBag struct {
-	AppContext context.Context
-	Config     config.Config
+	Config config.Config
 
 	RoomRepo     ports.RoomRepository
 	FileStore    ports.FileStore
@@ -22,7 +19,6 @@ type DependencyBag struct {
 }
 
 func NewDependencyBag(
-	appContext context.Context,
 	config config.Config,
 	roomRepo ports.RoomRepository,
 	fileStore ports.FileStore,
@@ -42,8 +38,7 @@ func NewDependencyBag(
 	fileShareService := fileShare.NewService(roomRepo, fileStore, hasher, tokenService, fileShareSettings)
 
 	return &DependencyBag{
-		AppContext: appContext,
-		Config:     config,
+		Config: config,
 
 		RoomRepo:     roomRepo,
 		FileStore:    fileStore,

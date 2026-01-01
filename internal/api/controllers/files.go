@@ -23,7 +23,7 @@ func (h *FilesController) Get(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	files, err := h.Deps.FileShareService.Files(h.Deps.AppContext, roomId, token)
+	files, err := h.Deps.FileShareService.Files(ctx.Request.Context(), roomId, token)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -46,7 +46,7 @@ func (h *FilesController) GetByUUID(ctx *gin.Context) {
 	fileId := middleware.MustFileIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	file, err := h.Deps.FileShareService.File(h.Deps.AppContext, roomId, fileId, token)
+	file, err := h.Deps.FileShareService.File(ctx.Request.Context(), roomId, fileId, token)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -64,7 +64,7 @@ func (h *FilesController) Download(ctx *gin.Context) {
 	fileId := middleware.MustFileIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	meta, rc, err := h.Deps.FileShareService.DownloadFile(h.Deps.AppContext, roomId, fileId, token)
+	meta, rc, err := h.Deps.FileShareService.DownloadFile(ctx.Request.Context(), roomId, fileId, token)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -101,7 +101,7 @@ func (h *FilesController) Upload(ctx *gin.Context) {
 	}
 	defer func() { _ = src.Close() }()
 
-	file, err := h.Deps.FileShareService.UploadFile(h.Deps.AppContext, roomId, token, fh.Filename, src)
+	file, err := h.Deps.FileShareService.UploadFile(ctx.Request.Context(), roomId, token, fh.Filename, src)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
@@ -117,7 +117,7 @@ func (h *FilesController) Delete(ctx *gin.Context) {
 	fileId := middleware.MustFileIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	if err := h.Deps.FileShareService.DeleteFile(h.Deps.AppContext, roomId, fileId, token); err != nil {
+	if err := h.Deps.FileShareService.DeleteFile(ctx.Request.Context(), roomId, fileId, token); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}

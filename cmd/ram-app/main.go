@@ -34,7 +34,7 @@ func main() {
 	hasher := security.BcryptHasher{Cost: 12}
 	tokenService := security.NewJwtService(config.JWTSecret)
 
-	deps := app.NewDependencyBag(appCtx, config, roomRepo, fileStore, hasher, tokenService)
+	deps := app.NewDependencyBag(config, roomRepo, fileStore, hasher, tokenService)
 
 	if err := fileStore.ClearAll(appCtx, config.UploadDir); err != nil {
 		log.Fatalf("file error: %v", err)
@@ -53,8 +53,10 @@ func main() {
 	})
 
 	srv := &http.Server{
-		Addr:    ":" + config.Port,
-		Handler: engine,
+		Addr:         ":" + config.Port,
+		Handler:      engine,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	go func() {

@@ -20,7 +20,7 @@ func NewRoomsController(deps *app.DependencyBag) *RoomsController {
 }
 
 func (h *RoomsController) Get(ctx *gin.Context) {
-	rooms, err := h.Deps.FileShareService.Rooms(h.Deps.AppContext)
+	rooms, err := h.Deps.FileShareService.Rooms(ctx.Request.Context())
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -41,7 +41,7 @@ func (h *RoomsController) CheckAccess(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	ok, err := h.Deps.FileShareService.CheckRoomAccess(h.Deps.AppContext, roomId, token)
+	ok, err := h.Deps.FileShareService.CheckRoomAccess(ctx.Request.Context(), roomId, token)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -59,7 +59,7 @@ func (h *RoomsController) CheckAccess(ctx *gin.Context) {
 func (h *RoomsController) GetByUUID(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 
-	room, ok, err := h.Deps.FileShareService.Room(h.Deps.AppContext, roomId)
+	room, ok, err := h.Deps.FileShareService.Room(ctx.Request.Context(), roomId)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -88,7 +88,7 @@ func (h *RoomsController) Create(ctx *gin.Context) {
 
 	duration := time.Second * time.Duration(requestData.Lifespan)
 
-	room, token, err := h.Deps.FileShareService.CreateRoom(h.Deps.AppContext, requestData.Password, duration)
+	room, token, err := h.Deps.FileShareService.CreateRoom(ctx.Request.Context(), requestData.Password, duration)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -112,7 +112,7 @@ func (h *RoomsController) Delete(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	if err := h.Deps.FileShareService.DeleteRoom(h.Deps.AppContext, roomId, token); err != nil {
+	if err := h.Deps.FileShareService.DeleteRoom(ctx.Request.Context(), roomId, token); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}

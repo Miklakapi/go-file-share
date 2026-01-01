@@ -30,7 +30,7 @@ func (h *AuthController) Auth(ctx *gin.Context) {
 		return
 	}
 
-	token, expiresAt, err := h.Deps.FileShareService.AuthRoom(h.Deps.AppContext, roomId, requestData.Password, time.Second*time.Duration(requestData.Lifespan))
+	token, expiresAt, err := h.Deps.FileShareService.AuthRoom(ctx.Request.Context(), roomId, requestData.Password, time.Second*time.Duration(requestData.Lifespan))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -53,7 +53,7 @@ func (h *AuthController) Logout(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	if err := h.Deps.FileShareService.LogoutRoom(h.Deps.AppContext, roomId, token); err != nil {
+	if err := h.Deps.FileShareService.LogoutRoom(ctx.Request.Context(), roomId, token); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}

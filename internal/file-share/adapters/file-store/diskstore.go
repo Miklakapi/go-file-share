@@ -55,7 +55,7 @@ func (DiskStore) ClearAll(ctx context.Context, uploadDir string) error {
 	return nil
 }
 
-func (DiskStore) Save(ctx context.Context, uploadDir, name string, r io.Reader) (path string, size int64, err error) {
+func (DiskStore) Save(ctx context.Context, uploadDir, name string, r io.Reader) (string, int64, error) {
 	if err := ctx.Err(); err != nil {
 		return "", 0, err
 	}
@@ -73,7 +73,7 @@ func (DiskStore) Save(ctx context.Context, uploadDir, name string, r io.Reader) 
 	}
 
 	safeName := filepath.Base(name)
-	path = filepath.Join(uploadDir, safeName)
+	path := filepath.Join(uploadDir, safeName)
 
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		return "", 0, err
@@ -87,7 +87,7 @@ func (DiskStore) Save(ctx context.Context, uploadDir, name string, r io.Reader) 
 		_ = dst.Close()
 	}()
 
-	size, err = io.Copy(dst, r)
+	size, err := io.Copy(dst, r)
 	if err != nil {
 		_ = os.Remove(path)
 		return "", 0, err

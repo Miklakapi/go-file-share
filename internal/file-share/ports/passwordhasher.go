@@ -1,6 +1,8 @@
 package ports
 
+import "context"
+
 type PasswordHasher interface {
-	Hash(plain string) (string, error)
-	Verify(plain, hash string) bool
+	Hash(ctx context.Context, plain string) (string, error)
+	Verify(ctx context.Context, plain, hash string) (bool, error)
 }
