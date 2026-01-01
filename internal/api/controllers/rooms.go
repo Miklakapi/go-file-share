@@ -25,6 +25,7 @@ func (rC *RoomsController) Get(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
+		return
 	}
 
 	result := make([]dto.Room, 0, len(rooms))
@@ -46,11 +47,13 @@ func (rC *RoomsController) CheckAccess(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
+		return
 	}
 	if !ok {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "room not found",
 		})
+		return
 	}
 
 	ctx.Status(http.StatusNoContent)
@@ -64,11 +67,13 @@ func (rC *RoomsController) GetByUUID(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
+		return
 	}
 	if !ok {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "room not found",
 		})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
