@@ -55,8 +55,7 @@ const roomDataTable = useRoomDataTable(els.tableBody, els.emptyState)
 const filesDataTable = useFilesDataTable(els.filesTableBody, els.filesEmpty)
 const rooms = useRooms()
 const files = useFiles()
-useSSE()
-// const sse = useSSE()
+const sse = useSSE()
 
 function show(view) {
     document.getElementById('view-list').hidden = view !== 'list'
@@ -233,6 +232,10 @@ function wireEvents() {
     })
 
     els.backButton().addEventListener('click', () => router.navigate('/'))
+
+    sse.onMessage(e => console.log("Received:", e.data))
+    sse.onEvent("time", e => console.log("TIME:", e.data))
+    sse.onError(err => console.error("EventSource failed:", err))
 }
 
 router.onRoute(async (from, to) => {
