@@ -12,11 +12,12 @@ import (
 	"github.com/Miklakapi/go-file-share/internal/api"
 	"github.com/Miklakapi/go-file-share/internal/api/controllers"
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
-	"github.com/Miklakapi/go-file-share/internal/app"
 	"github.com/Miklakapi/go-file-share/internal/config"
 	filestore "github.com/Miklakapi/go-file-share/internal/file-share/adapters/file-store"
 	roomrepository "github.com/Miklakapi/go-file-share/internal/file-share/adapters/room-repository"
 	"github.com/Miklakapi/go-file-share/internal/file-share/adapters/security"
+	fileShare "github.com/Miklakapi/go-file-share/internal/file-share/application"
+	fileShareDomain "github.com/Miklakapi/go-file-share/internal/file-share/domain"
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,8 +34,16 @@ func main() {
 	fileStore := filestore.DiskStore{}
 	hasher := security.BcryptHasher{Cost: 12}
 	tokenService := security.NewJwtService(config.JWTSecret)
-
-	deps := app.NewDependencyBag(config, roomRepo, fileStore, hasher, tokenService)
+	fileShareSettings := fileShareDomain.NewPolicy(
+		config.DefaultRoomTTL,
+		config.TokenTTL,
+		config.MaxFiles,
+		config.MaxRoomBytes,
+		config.MaxRoomLifespan,
+		config.MaxTokenLifespan,
+		config.UploadDir,
+	)
+	fileShareService := fileShare.NewService(roomRepo, fileStore, hasher, tokenService, fileShareSettings)
 
 	if err := fileStore.ClearAll(appCtx, config.UploadDir); err != nil {
 		log.Fatalf("file error: %v", err)
@@ -44,12 +53,12 @@ func main() {
 	engine.Use(gin.Logger(), gin.Recovery())
 
 	api.RegisterRoutes(engine, &api.ControllerBag{
-		HealthController: controllers.NewHealthController(deps),
-		HtmlController:   controllers.NewHtmlController(deps),
-		AuthController:   controllers.NewAuthController(deps),
-		RoomsController:  controllers.NewRoomsController(deps),
-		FilesController:  controllers.NewFilesController(deps),
-		AuthMiddleware:   middleware.AuthMiddleware(deps),
+		HealthController: controllers.NewHealthController(),
+		HtmlController:   controllers.NewHtmlController(config.PublicDir),
+		AuthController:   controllers.NewAuthController(fileShareService),
+		RoomsController:  controllers.NewRoomsController(fileShareService),
+		FilesController:  controllers.NewFilesController(fileShareService),
+		AuthMiddleware:   middleware.AuthMiddleware(tokenService),
 	})
 
 	srv := &http.Server{

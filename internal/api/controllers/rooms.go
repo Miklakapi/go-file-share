@@ -7,20 +7,20 @@ import (
 
 	"github.com/Miklakapi/go-file-share/internal/api/dto"
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
-	"github.com/Miklakapi/go-file-share/internal/app"
+	fileShare "github.com/Miklakapi/go-file-share/internal/file-share/application"
 	"github.com/gin-gonic/gin"
 )
 
 type RoomsController struct {
-	Deps *app.DependencyBag
+	fileShareService *fileShare.Service
 }
 
-func NewRoomsController(deps *app.DependencyBag) *RoomsController {
-	return &RoomsController{Deps: deps}
+func NewRoomsController(fileShareService *fileShare.Service) *RoomsController {
+	return &RoomsController{fileShareService: fileShareService}
 }
 
-func (h *RoomsController) Get(ctx *gin.Context) {
-	rooms, err := h.Deps.FileShareService.Rooms(ctx.Request.Context())
+func (rC *RoomsController) Get(ctx *gin.Context) {
+	rooms, err := rC.fileShareService.Rooms(ctx.Request.Context())
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -37,11 +37,11 @@ func (h *RoomsController) Get(ctx *gin.Context) {
 	})
 }
 
-func (h *RoomsController) CheckAccess(ctx *gin.Context) {
+func (rC *RoomsController) CheckAccess(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	ok, err := h.Deps.FileShareService.CheckRoomAccess(ctx.Request.Context(), roomId, token)
+	ok, err := rC.fileShareService.CheckRoomAccess(ctx.Request.Context(), roomId, token)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -56,10 +56,10 @@ func (h *RoomsController) CheckAccess(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-func (h *RoomsController) GetByUUID(ctx *gin.Context) {
+func (rC *RoomsController) GetByUUID(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 
-	room, ok, err := h.Deps.FileShareService.Room(ctx.Request.Context(), roomId)
+	room, ok, err := rC.fileShareService.Room(ctx.Request.Context(), roomId)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -76,7 +76,7 @@ func (h *RoomsController) GetByUUID(ctx *gin.Context) {
 	})
 }
 
-func (h *RoomsController) Create(ctx *gin.Context) {
+func (rC *RoomsController) Create(ctx *gin.Context) {
 	requestData := dto.CreateRoomRequest{}
 
 	if err := ctx.ShouldBind(&requestData); err != nil {
@@ -88,7 +88,7 @@ func (h *RoomsController) Create(ctx *gin.Context) {
 
 	duration := time.Second * time.Duration(requestData.Lifespan)
 
-	room, token, err := h.Deps.FileShareService.CreateRoom(ctx.Request.Context(), requestData.Password, duration)
+	room, token, err := rC.fileShareService.CreateRoom(ctx.Request.Context(), requestData.Password, duration)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -108,11 +108,11 @@ func (h *RoomsController) Create(ctx *gin.Context) {
 	})
 }
 
-func (h *RoomsController) Delete(ctx *gin.Context) {
+func (rC *RoomsController) Delete(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	if err := h.Deps.FileShareService.DeleteRoom(ctx.Request.Context(), roomId, token); err != nil {
+	if err := rC.fileShareService.DeleteRoom(ctx.Request.Context(), roomId, token); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}

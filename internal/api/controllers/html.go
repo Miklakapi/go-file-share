@@ -6,23 +6,22 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Miklakapi/go-file-share/internal/app"
 	"github.com/gin-gonic/gin"
 )
 
 type HtmlController struct {
-	Deps *app.DependencyBag
+	publicDir string
 }
 
-func NewHtmlController(deps *app.DependencyBag) *HtmlController {
-	return &HtmlController{Deps: deps}
+func NewHtmlController(publicDir string) *HtmlController {
+	return &HtmlController{publicDir: publicDir}
 }
 
-func (h *HtmlController) Index(ctx *gin.Context) {
-	h.serveIndex(ctx)
+func (hC *HtmlController) Index(ctx *gin.Context) {
+	hC.serveIndex(ctx)
 }
 
-func (h *HtmlController) SPAFallback(ctx *gin.Context) {
+func (hC *HtmlController) SPAFallback(ctx *gin.Context) {
 	path := ctx.Request.URL.Path
 
 	if strings.HasPrefix(path, "/api/") {
@@ -30,26 +29,26 @@ func (h *HtmlController) SPAFallback(ctx *gin.Context) {
 		return
 	}
 
-	publicDir := h.Deps.Config.PublicDir
+	publicDir := hC.publicDir
 	fullPath := filepath.Join(publicDir, filepath.Clean(path))
 	if fileExists(fullPath) {
 		ctx.File(fullPath)
 		return
 	}
 
-	h.serveIndex(ctx)
+	hC.serveIndex(ctx)
 }
 
-func (h *HtmlController) Assets() string {
-	return h.Deps.Config.PublicDir + "/assets"
+func (hC *HtmlController) Assets() string {
+	return hC.publicDir + "/assets"
 }
 
-func (h *HtmlController) Favicon() string {
-	return h.Deps.Config.PublicDir + "/favicon.ico"
+func (hC *HtmlController) Favicon() string {
+	return hC.publicDir + "/favicon.ico"
 }
 
-func (h *HtmlController) serveIndex(ctx *gin.Context) {
-	indexPath := filepath.Join(h.Deps.Config.PublicDir, "index.html")
+func (hC *HtmlController) serveIndex(ctx *gin.Context) {
+	indexPath := filepath.Join(hC.publicDir, "index.html")
 
 	if !fileExists(indexPath) {
 		ctx.JSON(http.StatusNotFound, gin.H{

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Miklakapi/go-file-share/internal/app"
+	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -13,7 +13,7 @@ const (
 	CtxTokenKey = "token"
 )
 
-func AuthMiddleware(deps *app.DependencyBag) gin.HandlerFunc {
+func AuthMiddleware(tokenService ports.TokenService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		roomIDAny, ok := ctx.Get(CtxRoomIDKey)
 		if !ok {
@@ -35,7 +35,7 @@ func AuthMiddleware(deps *app.DependencyBag) gin.HandlerFunc {
 		}
 		ctx.Set(CtxTokenKey, raw)
 
-		if err := deps.TokenService.ValidateWithRoom(ctx.Request.Context(), roomID, token); err != nil {
+		if err := tokenService.ValidateWithRoom(ctx.Request.Context(), roomID, token); err != nil {
 			www, msg := mapJWTError(err)
 			abortUnauthorized(ctx, www, msg)
 			return

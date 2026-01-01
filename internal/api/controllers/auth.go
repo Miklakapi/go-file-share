@@ -7,19 +7,19 @@ import (
 
 	"github.com/Miklakapi/go-file-share/internal/api/dto"
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
-	"github.com/Miklakapi/go-file-share/internal/app"
+	fileShare "github.com/Miklakapi/go-file-share/internal/file-share/application"
 	"github.com/gin-gonic/gin"
 )
 
 type AuthController struct {
-	Deps *app.DependencyBag
+	fileShareService *fileShare.Service
 }
 
-func NewAuthController(deps *app.DependencyBag) *AuthController {
-	return &AuthController{Deps: deps}
+func NewAuthController(fileShareService *fileShare.Service) *AuthController {
+	return &AuthController{fileShareService: fileShareService}
 }
 
-func (h *AuthController) Auth(ctx *gin.Context) {
+func (aC *AuthController) Auth(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 
 	requestData := dto.AuthRoomRequest{}
@@ -30,7 +30,7 @@ func (h *AuthController) Auth(ctx *gin.Context) {
 		return
 	}
 
-	token, expiresAt, err := h.Deps.FileShareService.AuthRoom(ctx.Request.Context(), roomId, requestData.Password, time.Second*time.Duration(requestData.Lifespan))
+	token, expiresAt, err := aC.fileShareService.AuthRoom(ctx.Request.Context(), roomId, requestData.Password, time.Second*time.Duration(requestData.Lifespan))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -49,11 +49,11 @@ func (h *AuthController) Auth(ctx *gin.Context) {
 	})
 }
 
-func (h *AuthController) Logout(ctx *gin.Context) {
+func (aC *AuthController) Logout(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	if err := h.Deps.FileShareService.LogoutRoom(ctx.Request.Context(), roomId, token); err != nil {
+	if err := aC.fileShareService.LogoutRoom(ctx.Request.Context(), roomId, token); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}

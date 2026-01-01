@@ -7,23 +7,23 @@ import (
 
 	"github.com/Miklakapi/go-file-share/internal/api/dto"
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
-	"github.com/Miklakapi/go-file-share/internal/app"
+	fileShare "github.com/Miklakapi/go-file-share/internal/file-share/application"
 	"github.com/gin-gonic/gin"
 )
 
 type FilesController struct {
-	Deps *app.DependencyBag
+	fileShareService *fileShare.Service
 }
 
-func NewFilesController(deps *app.DependencyBag) *FilesController {
-	return &FilesController{Deps: deps}
+func NewFilesController(fileShareService *fileShare.Service) *FilesController {
+	return &FilesController{fileShareService: fileShareService}
 }
 
-func (h *FilesController) Get(ctx *gin.Context) {
+func (fC *FilesController) Get(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	files, err := h.Deps.FileShareService.Files(ctx.Request.Context(), roomId, token)
+	files, err := fC.fileShareService.Files(ctx.Request.Context(), roomId, token)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -41,12 +41,12 @@ func (h *FilesController) Get(ctx *gin.Context) {
 	})
 }
 
-func (h *FilesController) GetByUUID(ctx *gin.Context) {
+func (fC *FilesController) GetByUUID(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 	fileId := middleware.MustFileIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	file, err := h.Deps.FileShareService.File(ctx.Request.Context(), roomId, fileId, token)
+	file, err := fC.fileShareService.File(ctx.Request.Context(), roomId, fileId, token)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -59,12 +59,12 @@ func (h *FilesController) GetByUUID(ctx *gin.Context) {
 	})
 }
 
-func (h *FilesController) Download(ctx *gin.Context) {
+func (fC *FilesController) Download(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 	fileId := middleware.MustFileIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	meta, rc, err := h.Deps.FileShareService.DownloadFile(ctx.Request.Context(), roomId, fileId, token)
+	meta, rc, err := fC.fileShareService.DownloadFile(ctx.Request.Context(), roomId, fileId, token)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -85,7 +85,7 @@ func (h *FilesController) Download(ctx *gin.Context) {
 	}
 }
 
-func (h *FilesController) Upload(ctx *gin.Context) {
+func (fC *FilesController) Upload(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
@@ -101,7 +101,7 @@ func (h *FilesController) Upload(ctx *gin.Context) {
 	}
 	defer func() { _ = src.Close() }()
 
-	file, err := h.Deps.FileShareService.UploadFile(ctx.Request.Context(), roomId, token, fh.Filename, src)
+	file, err := fC.fileShareService.UploadFile(ctx.Request.Context(), roomId, token, fh.Filename, src)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
@@ -112,12 +112,12 @@ func (h *FilesController) Upload(ctx *gin.Context) {
 	})
 }
 
-func (h *FilesController) Delete(ctx *gin.Context) {
+func (fC *FilesController) Delete(ctx *gin.Context) {
 	roomId := middleware.MustRoomIDParam(ctx)
 	fileId := middleware.MustFileIDParam(ctx)
 	token := middleware.MustToken(ctx)
 
-	if err := h.Deps.FileShareService.DeleteFile(ctx.Request.Context(), roomId, fileId, token); err != nil {
+	if err := fC.fileShareService.DeleteFile(ctx.Request.Context(), roomId, fileId, token); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
