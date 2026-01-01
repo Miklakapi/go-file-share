@@ -83,7 +83,11 @@ func main() {
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Printf("server shutdown error: %v", err)
+		log.Printf("graceful shutdown failed: %v, forcing close", err)
+
+		if err := srv.Close(); err != nil {
+			log.Printf("forced server close failed: %v", err)
+		}
 	}
 
 	log.Println("server stopped gracefully")
