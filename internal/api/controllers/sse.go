@@ -40,7 +40,7 @@ func (sC *SSEController) SSE(ctx *gin.Context) {
 			flusher.Flush()
 
 		case <-pingTicker.C:
-			fmt.Fprintf(ctx.Writer, "data: Ping")
+			fmt.Fprintf(ctx.Writer, "data: Ping\n\n")
 			flusher.Flush()
 
 		case <-ctx.Request.Context().Done():
