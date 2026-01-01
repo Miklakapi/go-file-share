@@ -45,6 +45,10 @@ func main() {
 	)
 	fileShareService := fileShare.NewService(roomRepo, fileStore, hasher, tokenService, fileShareSettings)
 
+	if err := fileStore.ClearAll(appCtx, config.UploadDir); err != nil {
+		log.Fatalf("file error: %v", err)
+	}
+
 	engine := gin.New()
 	engine.Use(gin.Logger(), gin.Recovery())
 
@@ -54,12 +58,15 @@ func main() {
 		AuthController:   controllers.NewAuthController(fileShareService),
 		RoomsController:  controllers.NewRoomsController(fileShareService),
 		FilesController:  controllers.NewFilesController(fileShareService),
+		SSEController:    controllers.NewSSEController(),
 		AuthMiddleware:   middleware.AuthMiddleware(tokenService),
 	})
 
 	srv := &http.Server{
-		Addr:    ":" + config.Port,
-		Handler: engine,
+		Addr:         ":" + config.Port,
+		Handler:      engine,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	go func() {

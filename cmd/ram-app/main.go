@@ -58,14 +58,15 @@ func main() {
 		AuthController:   controllers.NewAuthController(fileShareService),
 		RoomsController:  controllers.NewRoomsController(fileShareService),
 		FilesController:  controllers.NewFilesController(fileShareService),
+		SSEController:    controllers.NewSSEController(),
 		AuthMiddleware:   middleware.AuthMiddleware(tokenService),
 	})
 
 	srv := &http.Server{
-		Addr:         ":" + config.Port,
-		Handler:      engine,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		Addr:        ":" + config.Port,
+		Handler:     engine,
+		ReadTimeout: 10 * time.Second,
+		// WriteTimeout: 10 * time.Second,
 	}
 
 	go func() {
