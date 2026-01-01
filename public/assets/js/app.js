@@ -7,6 +7,7 @@ import { useRouter } from "./router.js"
 import { useToast } from "./toast.js"
 import { useFilesDataTable } from "./fileDataTable.js"
 import { formatDate } from "./helpers.js"
+import { useSSE } from "./sse.js"
 
 const els = {
     // Others
@@ -54,6 +55,8 @@ const roomDataTable = useRoomDataTable(els.tableBody, els.emptyState)
 const filesDataTable = useFilesDataTable(els.filesTableBody, els.filesEmpty)
 const rooms = useRooms()
 const files = useFiles()
+useSSE()
+// const sse = useSSE()
 
 function show(view) {
     document.getElementById('view-list').hidden = view !== 'list'
