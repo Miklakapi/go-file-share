@@ -26,21 +26,29 @@ func (sC *SSEController) SSE(ctx *gin.Context) {
 	ctx.Header("Cache-Control", "no-cache")
 	ctx.Header("Connection", "keep-alive")
 
-	messageTicker := time.NewTicker(15 * time.Second)
+	ctx.Writer.WriteHeaderNow()
+	flusher.Flush()
+
+	messageTicker := time.NewTicker(10 * time.Second)
 	defer messageTicker.Stop()
 
-	pingTicker := time.NewTicker(30 * time.Second)
+	pingTicker := time.NewTicker(15 * time.Second)
 	defer pingTicker.Stop()
 
 	for {
 		select {
 		case t := <-messageTicker.C:
-			fmt.Fprintf(ctx.Writer, "event: time\n")
-			fmt.Fprintf(ctx.Writer, "data: Current time %s\n\n", t.Format(time.RFC3339))
+			_, err := fmt.Fprintf(ctx.Writer, "event: time\ndata: Current time %s\n\n", t.Format(time.RFC3339))
+			if err != nil {
+				return
+			}
 			flusher.Flush()
 
 		case <-pingTicker.C:
-			fmt.Fprintf(ctx.Writer, "data: Ping\n\n")
+			_, err := fmt.Fprintf(ctx.Writer, "data: Ping\n\n")
+			if err != nil {
+				return
+			}
 			flusher.Flush()
 
 		case <-ctx.Request.Context().Done():
