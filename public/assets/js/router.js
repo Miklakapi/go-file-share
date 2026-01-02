@@ -2,6 +2,10 @@ export function useRouter() {
     const listeners = new Set()
     let currentPath = location.pathname
 
+    function getLocation() {
+        return currentPath
+    }
+
     function navigate(path) {
         if (!path.startsWith('/')) path = '/' + path
         if (path === currentPath) return
@@ -46,6 +50,7 @@ export function useRouter() {
     })
 
     return {
+        getLocation,
         navigate,
         replace,
         onRoute,

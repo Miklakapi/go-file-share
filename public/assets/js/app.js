@@ -233,8 +233,13 @@ function wireEvents() {
 
     els.backButton().addEventListener('click', () => router.navigate('/'))
 
-    sse.onMessage(e => console.log("Received:", e.data))
-    sse.onEvent("time", e => console.log("TIME:", e.data))
+    sse.onMessage(async e => console.info(e.data))
+    sse.onEvent("RoomsChange", async e => {
+        console.log(router.getLocation())
+        if (router.getLocation() !== '/') return
+        roomDataTable.loadData(await rooms.get())
+    })
+    sse.onEvent("Message", e => toast.show(e.data, 'success'))
     sse.onError(err => console.error("EventSource failed:", err))
 }
 
