@@ -58,7 +58,7 @@ func main() {
 		AuthController:   controllers.NewAuthController(fileShareService),
 		RoomsController:  controllers.NewRoomsController(fileShareService),
 		FilesController:  controllers.NewFilesController(fileShareService),
-		SSEController:    controllers.NewSSEController(),
+		SSEController:    controllers.NewSSEController(appCtx),
 		AuthMiddleware:   middleware.AuthMiddleware(tokenService),
 	})
 

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,10 +10,11 @@ import (
 )
 
 type SSEController struct {
+	appCtx context.Context
 }
 
-func NewSSEController() *SSEController {
-	return &SSEController{}
+func NewSSEController(appCtx context.Context) *SSEController {
+	return &SSEController{appCtx: appCtx}
 }
 
 func (sC *SSEController) SSE(ctx *gin.Context) {
@@ -52,6 +54,9 @@ func (sC *SSEController) SSE(ctx *gin.Context) {
 			flusher.Flush()
 
 		case <-ctx.Request.Context().Done():
+			return
+
+		case <-sC.appCtx.Done():
 			return
 		}
 	}
