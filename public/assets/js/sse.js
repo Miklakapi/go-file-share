@@ -3,7 +3,7 @@ export function useSSE() {
         throw new Error("EventSource not supported in this browser")
     }
 
-    const es = new EventSource("http://localhost:8080/api/v1/sse")
+    const es = new EventSource("/api/v1/sse")
 
     function onMessage(handler) {
         es.onmessage = handler
