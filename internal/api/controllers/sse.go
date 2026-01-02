@@ -6,15 +6,17 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 	"github.com/gin-gonic/gin"
 )
 
 type SSEController struct {
-	appCtx context.Context
+	appCtx          context.Context
+	eventSubscriber ports.EventSubscriber
 }
 
-func NewSSEController(appCtx context.Context) *SSEController {
-	return &SSEController{appCtx: appCtx}
+func NewSSEController(appCtx context.Context, eventSubscriber ports.EventSubscriber) *SSEController {
+	return &SSEController{appCtx: appCtx, eventSubscriber: eventSubscriber}
 }
 
 func (sC *SSEController) SSE(ctx *gin.Context) {
@@ -31,33 +33,70 @@ func (sC *SSEController) SSE(ctx *gin.Context) {
 	ctx.Writer.WriteHeaderNow()
 	flusher.Flush()
 
-	messageTicker := time.NewTicker(10 * time.Second)
-	defer messageTicker.Stop()
-
-	pingTicker := time.NewTicker(15 * time.Second)
+	pingTicker := time.NewTicker(60 * time.Second)
 	defer pingTicker.Stop()
+
+	reqCtx := ctx.Request.Context()
+
+	// createCh, unsubscribe1, err := sC.eventSubscriber.Subscribe(reqCtx, ports.EventRoomCreate)
+	// if err != nil {
+	// 	return
+	// }
+	// defer unsubscribe1()
+
+	// deleteCh, unsubscribe2, err := sC.eventSubscriber.Subscribe(reqCtx, ports.EventRoomDelete)
+	// if err != nil {
+	// 	return
+	// }
+	// defer unsubscribe2()
 
 	for {
 		select {
-		case t := <-messageTicker.C:
-			_, err := fmt.Fprintf(ctx.Writer, "event: time\ndata: Current time %s\n\n", t.Format(time.RFC3339))
-			if err != nil {
-				return
-			}
-			flusher.Flush()
+		// case <-createCh:
+		// 	for {
+		// 		select {
+		// 		case <-createCh:
+		// 		case <-deleteCh:
+		// 		default:
+		// 			goto drained1
+		// 		}
+		// 	}
+		// drained1:
+		// 	if !sC.sendEvent(ctx, flusher, "RoomsChange", time.Now().Format(time.RFC3339)) {
+		// 		return
+		// 	}
+		// case <-deleteCh:
+		// 	for {
+		// 		select {
+		// 		case <-createCh:
+		// 		case <-deleteCh:
+		// 		default:
+		// 			goto drained2
+		// 		}
+		// 	}
+		// drained2:
+		// 	if !sC.sendEvent(ctx, flusher, "RoomsChange", time.Now().Format(time.RFC3339)) {
+		// 		return
+		// 	}
 
 		case <-pingTicker.C:
-			_, err := fmt.Fprintf(ctx.Writer, "data: Ping\n\n")
-			if err != nil {
+			if !sC.sendEvent(ctx, flusher, "Ping", time.Now().Format(time.RFC3339)) {
 				return
 			}
-			flusher.Flush()
 
-		case <-ctx.Request.Context().Done():
+		case <-reqCtx.Done():
 			return
 
 		case <-sC.appCtx.Done():
 			return
 		}
 	}
+}
+
+func (sC *SSEController) sendEvent(ctx *gin.Context, flusher http.Flusher, name, data string) bool {
+	if _, err := fmt.Fprintf(ctx.Writer, "event: %s\ndata: %s\n\n", name, data); err != nil {
+		return false
+	}
+	flusher.Flush()
+	return true
 }

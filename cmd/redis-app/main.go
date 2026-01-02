@@ -13,6 +13,7 @@ import (
 	"github.com/Miklakapi/go-file-share/internal/api/controllers"
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
 	"github.com/Miklakapi/go-file-share/internal/config"
+	eventbus "github.com/Miklakapi/go-file-share/internal/file-share/adapters/event-bus"
 	filestore "github.com/Miklakapi/go-file-share/internal/file-share/adapters/file-store"
 	roomrepository "github.com/Miklakapi/go-file-share/internal/file-share/adapters/room-repository"
 	"github.com/Miklakapi/go-file-share/internal/file-share/adapters/security"
@@ -31,6 +32,7 @@ func main() {
 	}
 
 	roomRepo := roomrepository.NewRedisRepo()
+	eventBus := eventbus.New()
 	fileStore := filestore.DiskStore{}
 	hasher := security.BcryptHasher{Cost: 12}
 	tokenService := security.NewJwtService(config.JWTSecret)
@@ -58,7 +60,7 @@ func main() {
 		AuthController:   controllers.NewAuthController(fileShareService),
 		RoomsController:  controllers.NewRoomsController(fileShareService),
 		FilesController:  controllers.NewFilesController(fileShareService),
-		SSEController:    controllers.NewSSEController(appCtx),
+		SSEController:    controllers.NewSSEController(appCtx, eventBus),
 		AuthMiddleware:   middleware.AuthMiddleware(tokenService),
 	})
 
