@@ -235,7 +235,6 @@ function wireEvents() {
 
     sse.onMessage(async e => console.info(e.data))
     sse.onEvent("RoomsChange", async e => {
-        console.log(router.getLocation())
         if (router.getLocation() !== '/') return
         roomDataTable.loadData(await rooms.get())
     })
