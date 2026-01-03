@@ -54,13 +54,7 @@ func (eb *EventBus) Subscribe(name ports.EventName) (<-chan ports.Event, ports.U
 	return s.ch, unsubscribe, nil
 }
 
-func (eb *EventBus) Publish(event ports.Event) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = ports.ErrPublishPanic
-		}
-	}()
-
+func (eb *EventBus) Publish(event ports.Event) error {
 	eb.mu.RLock()
 	subsMap := eb.subs[event.Name]
 	subs := make([]*sub, 0, len(subsMap))
@@ -70,26 +64,41 @@ func (eb *EventBus) Publish(event ports.Event) (err error) {
 	eb.mu.RUnlock()
 
 	for _, s := range subs {
-		select {
-		case s.ch <- event:
+		if trySend(s.ch, event) {
 			continue
-		default:
 		}
 
-		for {
-			select {
-			case <-s.ch:
-			default:
-				goto drained
-			}
+		for tryDrainOne(s.ch) {
 		}
 
-	drained:
-		select {
-		case s.ch <- event:
-		default:
-		}
+		_ = trySend(s.ch, event)
 	}
 
-	return err
+	return nil
+}
+
+func trySend(ch chan ports.Event, event ports.Event) (sent bool) {
+	defer func() {
+		_ = recover()
+	}()
+
+	select {
+	case ch <- event:
+		return true
+	default:
+		return false
+	}
+}
+func tryDrainOne(ch chan ports.Event) (drained bool) {
+	defer func() {
+		_ = recover()
+	}()
+
+	select {
+	case <-ch:
+		return true
+	default:
+		return false
+	}
+
 }
