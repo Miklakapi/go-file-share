@@ -47,6 +47,8 @@ const els = {
     filesEmpty: () => document.getElementById('filesEmpty'),
 }
 
+let suppressRoomsRefresh = false
+
 const router = useRouter()
 const toast = useToast(els.toast)
 const createDialog = useCreateDialog(els.createDialog, els.createDialogPassword, els.createDialogLifespan, els.createDialogSubmitBtn, els.createDialogError)
@@ -73,6 +75,7 @@ function wireEvents() {
         }
         try {
             createDialog.disableSubmitButton(true)
+            suppressRoomsRefresh = true
             const id = await rooms.create((els.createDialogPassword().value || '').trim(), Number(els.createDialogLifespan().value))
             createDialog.close()
             toast.show('Created successfully!', 'success')
@@ -81,6 +84,7 @@ function wireEvents() {
             createDialog.setError(`${error}`.replace("Error:", ""))
         } finally {
             createDialog.disableSubmitButton(false)
+            suppressRoomsRefresh = false
         }
     })
 
@@ -235,6 +239,7 @@ function wireEvents() {
 
     sse.onMessage(async e => console.info(e.data))
     sse.onEvent("RoomsChange", async e => {
+        if (suppressRoomsRefresh) return
         if (router.getLocation() !== '/') return
         roomDataTable.loadData(await rooms.get())
     })
