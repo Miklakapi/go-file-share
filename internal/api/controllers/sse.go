@@ -53,28 +53,11 @@ func (sC *SSEController) SSE(ctx *gin.Context) {
 	for {
 		select {
 		case <-createCh:
-			for {
-				select {
-				case <-createCh:
-				case <-deleteCh:
-				default:
-					goto drained1
-				}
-			}
-		drained1:
 			if !sC.sendEvent(ctx, flusher, "RoomsChange", time.Now().Format(time.RFC3339)) {
 				return
 			}
+
 		case <-deleteCh:
-			for {
-				select {
-				case <-createCh:
-				case <-deleteCh:
-				default:
-					goto drained2
-				}
-			}
-		drained2:
 			if !sC.sendEvent(ctx, flusher, "RoomsChange", time.Now().Format(time.RFC3339)) {
 				return
 			}
