@@ -16,4 +16,6 @@ var (
 	ErrTokenExpired      = errors.New("token expired")
 	ErrTokenParse        = errors.New("token parse error")
 	ErrTokenRoomMismatch = errors.New("token room mismatch")
+
+	ErrPublishPanic = errors.New("eventbus publish panic")
 )
