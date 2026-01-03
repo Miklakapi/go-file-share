@@ -38,46 +38,46 @@ func (sC *SSEController) SSE(ctx *gin.Context) {
 
 	reqCtx := ctx.Request.Context()
 
-	// createCh, unsubscribe1, err := sC.eventSubscriber.Subscribe(reqCtx, ports.EventRoomCreate)
-	// if err != nil {
-	// 	return
-	// }
-	// defer unsubscribe1()
+	createCh, unsubscribe1, err := sC.eventSubscriber.Subscribe(ports.EventRoomCreate)
+	if err != nil {
+		return
+	}
+	defer unsubscribe1()
 
-	// deleteCh, unsubscribe2, err := sC.eventSubscriber.Subscribe(reqCtx, ports.EventRoomDelete)
-	// if err != nil {
-	// 	return
-	// }
-	// defer unsubscribe2()
+	deleteCh, unsubscribe2, err := sC.eventSubscriber.Subscribe(ports.EventRoomDelete)
+	if err != nil {
+		return
+	}
+	defer unsubscribe2()
 
 	for {
 		select {
-		// case <-createCh:
-		// 	for {
-		// 		select {
-		// 		case <-createCh:
-		// 		case <-deleteCh:
-		// 		default:
-		// 			goto drained1
-		// 		}
-		// 	}
-		// drained1:
-		// 	if !sC.sendEvent(ctx, flusher, "RoomsChange", time.Now().Format(time.RFC3339)) {
-		// 		return
-		// 	}
-		// case <-deleteCh:
-		// 	for {
-		// 		select {
-		// 		case <-createCh:
-		// 		case <-deleteCh:
-		// 		default:
-		// 			goto drained2
-		// 		}
-		// 	}
-		// drained2:
-		// 	if !sC.sendEvent(ctx, flusher, "RoomsChange", time.Now().Format(time.RFC3339)) {
-		// 		return
-		// 	}
+		case <-createCh:
+			for {
+				select {
+				case <-createCh:
+				case <-deleteCh:
+				default:
+					goto drained1
+				}
+			}
+		drained1:
+			if !sC.sendEvent(ctx, flusher, "RoomsChange", time.Now().Format(time.RFC3339)) {
+				return
+			}
+		case <-deleteCh:
+			for {
+				select {
+				case <-createCh:
+				case <-deleteCh:
+				default:
+					goto drained2
+				}
+			}
+		drained2:
+			if !sC.sendEvent(ctx, flusher, "RoomsChange", time.Now().Format(time.RFC3339)) {
+				return
+			}
 
 		case <-pingTicker.C:
 			if !sC.sendEvent(ctx, flusher, "Ping", time.Now().Format(time.RFC3339)) {

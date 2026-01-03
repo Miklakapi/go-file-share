@@ -58,7 +58,7 @@ func main() {
 		HealthController: controllers.NewHealthController(),
 		HtmlController:   controllers.NewHtmlController(config.PublicDir),
 		AuthController:   controllers.NewAuthController(fileShareService),
-		RoomsController:  controllers.NewRoomsController(fileShareService),
+		RoomsController:  controllers.NewRoomsController(fileShareService, eventBus),
 		FilesController:  controllers.NewFilesController(fileShareService),
 		SSEController:    controllers.NewSSEController(appCtx, eventBus),
 		AuthMiddleware:   middleware.AuthMiddleware(tokenService),

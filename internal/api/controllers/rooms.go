@@ -8,15 +8,20 @@ import (
 	"github.com/Miklakapi/go-file-share/internal/api/dto"
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
 	fileShare "github.com/Miklakapi/go-file-share/internal/file-share/application"
+	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 	"github.com/gin-gonic/gin"
 )
 
 type RoomsController struct {
 	fileShareService *fileShare.Service
+	eventPublisher   ports.EventPublisher
 }
 
-func NewRoomsController(fileShareService *fileShare.Service) *RoomsController {
-	return &RoomsController{fileShareService: fileShareService}
+func NewRoomsController(fileShareService *fileShare.Service, eventPublisher ports.EventPublisher) *RoomsController {
+	return &RoomsController{
+		fileShareService: fileShareService,
+		eventPublisher:   eventPublisher,
+	}
 }
 
 func (rC *RoomsController) Get(ctx *gin.Context) {
@@ -101,6 +106,13 @@ func (rC *RoomsController) Create(ctx *gin.Context) {
 		return
 	}
 
+	if err := rC.eventPublisher.Publish(ports.Event{Name: ports.EventRoomCreate, Data: room.ID}); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
 	basePath := strings.TrimSuffix(ctx.Request.URL.Path, "/")
 	cookiePath := basePath + "/" + room.ID.String()
 
@@ -119,6 +131,13 @@ func (rC *RoomsController) Delete(ctx *gin.Context) {
 
 	if err := rC.fileShareService.DeleteRoom(ctx.Request.Context(), roomId, token); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	if err := rC.eventPublisher.Publish(ports.Event{Name: ports.EventRoomDelete, Data: roomId}); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
 		return
 	}
 
