@@ -87,14 +87,15 @@ func abortUnauthorized(ctx *gin.Context, wwwAuth string, msg string) {
 		ctx.Header("WWW-Authenticate", wwwAuth)
 	}
 	ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-		"error": msg,
+		"code":    "TOKEN_INVALID",
+		"message": msg,
 	})
 }
 
 func mapJWTError(_ error) (wwwAuth string, msg string) {
 	msg = "Unauthorized: invalid or expired token"
 
-	switch {
+	// switch {
 	// case errors.Is(err, utils.ErrTokenExpired):
 	// 	wwwAuth = `Bearer error="invalid_token", error_description="Token expired"`
 	// case errors.Is(err, utils.ErrTokenSignAlgo):
@@ -103,9 +104,10 @@ func mapJWTError(_ error) (wwwAuth string, msg string) {
 	// 	wwwAuth = `Bearer error="invalid_token", error_description="Token could not be parsed"`
 	// case errors.Is(err, utils.ErrTokenInvalid):
 	// 	wwwAuth = `Bearer error="invalid_token", error_description="Token is invalid"`
-	default:
-		wwwAuth = `Bearer error="invalid_token", error_description="Token is invalid or expired"`
-	}
+	// default:
+	// 	wwwAuth = `Bearer error="invalid_token", error_description="Token is invalid or expired"`
+	// }
+	wwwAuth = `Bearer error="invalid_token", error_description="Token is invalid or expired"`
 
 	return wwwAuth, msg
 }

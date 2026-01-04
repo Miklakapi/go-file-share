@@ -15,7 +15,7 @@ type HTTPError struct {
 	Message string `json:"message"`
 }
 
-func ErrorHandler() gin.HandlerFunc {
+func ErrorMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
 

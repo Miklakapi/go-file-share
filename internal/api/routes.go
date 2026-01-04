@@ -14,6 +14,7 @@ type ControllerBag struct {
 	FilesController  *controllers.FilesController
 	SSEController    *controllers.SSEController
 	AuthMiddleware   gin.HandlerFunc
+	ErrorMiddleware  gin.HandlerFunc
 }
 
 func RegisterRoutes(router *gin.Engine, cB *ControllerBag) {
@@ -22,7 +23,7 @@ func RegisterRoutes(router *gin.Engine, cB *ControllerBag) {
 	router.StaticFile("/favicon.ico", cB.HtmlController.Favicon())
 	router.NoRoute(cB.HtmlController.SPAFallback)
 
-	api := router.Group("/api/v1")
+	api := router.Group("/api/v1", cB.ErrorMiddleware)
 	api.GET("/ping", cB.HealthController.Ping)
 	api.GET("/health", cB.HealthController.Health)
 	api.GET("/sse", cB.SSEController.SSE)

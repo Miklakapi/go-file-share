@@ -62,6 +62,7 @@ func main() {
 		FilesController:  controllers.NewFilesController(fileShareService),
 		SSEController:    controllers.NewSSEController(appCtx, eventBus),
 		AuthMiddleware:   middleware.AuthMiddleware(tokenService),
+		ErrorMiddleware:  middleware.ErrorMiddleware(),
 	})
 
 	srv := &http.Server{
