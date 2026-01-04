@@ -49,7 +49,7 @@ func (r *Room) AddToken(token string) error {
 		return ErrEmptyToken
 	}
 	if r.tokens == nil {
-		return ErrTokenNotFound
+		r.tokens = make(map[string]bool)
 	}
 	r.tokens[token] = true
 	return nil
@@ -60,7 +60,7 @@ func (r *Room) RemoveToken(token string) error {
 		return ErrEmptyToken
 	}
 	if r.tokens == nil {
-		return ErrTokenNotFound
+		r.tokens = make(map[string]bool)
 	}
 	if _, ok := r.tokens[token]; !ok {
 		return ErrTokenNotFound
