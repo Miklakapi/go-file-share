@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	apierrors "github.com/Miklakapi/go-file-share/internal/api/api-errors"
 	"github.com/Miklakapi/go-file-share/internal/api/dto"
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
 	fileShare "github.com/Miklakapi/go-file-share/internal/file-share/application"
@@ -24,17 +25,13 @@ func (aC *AuthController) Auth(ctx *gin.Context) {
 
 	requestData := dto.AuthRoomRequest{}
 	if err := ctx.ShouldBind(&requestData); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "Could not parse request data",
-		})
+		_ = ctx.Error(apierrors.ErrInvalidRequest)
 		return
 	}
 
 	token, expiresAt, err := aC.fileShareService.AuthRoom(ctx.Request.Context(), roomId, requestData.Password, time.Second*time.Duration(requestData.Lifespan))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		_ = ctx.Error(err)
 		return
 	}
 
@@ -54,7 +51,7 @@ func (aC *AuthController) Logout(ctx *gin.Context) {
 	token := middleware.MustToken(ctx)
 
 	if err := aC.fileShareService.LogoutRoom(ctx.Request.Context(), roomId, token); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		_ = ctx.Error(err)
 		return
 	}
 

@@ -25,9 +25,7 @@ func (fC *FilesController) Get(ctx *gin.Context) {
 
 	files, err := fC.fileShareService.Files(ctx.Request.Context(), roomId, token)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		_ = ctx.Error(err)
 		return
 	}
 
@@ -48,9 +46,7 @@ func (fC *FilesController) GetByUUID(ctx *gin.Context) {
 
 	file, err := fC.fileShareService.File(ctx.Request.Context(), roomId, fileId, token)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		_ = ctx.Error(err)
 		return
 	}
 
@@ -66,9 +62,7 @@ func (fC *FilesController) Download(ctx *gin.Context) {
 
 	meta, rc, err := fC.fileShareService.DownloadFile(ctx.Request.Context(), roomId, fileId, token)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		_ = ctx.Error(err)
 		return
 	}
 	defer func() { _ = rc.Close() }()
@@ -91,19 +85,19 @@ func (fC *FilesController) Upload(ctx *gin.Context) {
 
 	fh, err := ctx.FormFile("file")
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		_ = ctx.Error(err)
 		return
 	}
 	src, err := fh.Open()
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		_ = ctx.Error(err)
 		return
 	}
 	defer func() { _ = src.Close() }()
 
 	file, err := fC.fileShareService.UploadFile(ctx.Request.Context(), roomId, token, fh.Filename, src)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		_ = ctx.Error(err)
 		return
 	}
 
@@ -118,7 +112,7 @@ func (fC *FilesController) Delete(ctx *gin.Context) {
 	token := middleware.MustToken(ctx)
 
 	if err := fC.fileShareService.DeleteFile(ctx.Request.Context(), roomId, fileId, token); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		_ = ctx.Error(err)
 		return
 	}
 

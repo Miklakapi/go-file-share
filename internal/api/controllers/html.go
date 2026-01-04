@@ -51,9 +51,7 @@ func (hC *HtmlController) serveIndex(ctx *gin.Context) {
 	indexPath := filepath.Join(hC.publicDir, "index.html")
 
 	if !fileExists(indexPath) {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"error": "Frontend not built (missing index.html)",
-		})
+		ctx.String(http.StatusNotFound, "Frontend not built (missing index.html)")
 		return
 	}
 

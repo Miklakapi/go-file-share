@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	apierrors "github.com/Miklakapi/go-file-share/internal/api/api-errors"
 	"github.com/Miklakapi/go-file-share/internal/file-share/domain"
 	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 	"github.com/gin-gonic/gin"
@@ -103,6 +104,12 @@ func MapErrors(err error) HTTPError {
 
 	case errors.Is(err, ports.ErrPublishPanic):
 		return HTTPError{Status: http.StatusInternalServerError, Code: "EVENTBUS_ERROR", Message: "Internal server error"}
+
+	// ======================
+	// API
+	// ======================
+	case errors.Is(err, apierrors.ErrInvalidRequest):
+		return HTTPError{Status: http.StatusBadRequest, Code: "INVALID_REQUEST", Message: "Invalid request payload"}
 
 	// ======================
 	// FALLBACK

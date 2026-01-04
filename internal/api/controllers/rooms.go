@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	apierrors "github.com/Miklakapi/go-file-share/internal/api/api-errors"
 	"github.com/Miklakapi/go-file-share/internal/api/dto"
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
 	fileShare "github.com/Miklakapi/go-file-share/internal/file-share/application"
@@ -27,9 +28,7 @@ func NewRoomsController(fileShareService *fileShare.Service, eventPublisher port
 func (rC *RoomsController) Get(ctx *gin.Context) {
 	rooms, err := rC.fileShareService.Rooms(ctx.Request.Context())
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		_ = ctx.Error(err)
 		return
 	}
 
@@ -49,15 +48,11 @@ func (rC *RoomsController) CheckAccess(ctx *gin.Context) {
 
 	ok, err := rC.fileShareService.CheckRoomAccess(ctx.Request.Context(), roomId, token)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		_ = ctx.Error(err)
 		return
 	}
 	if !ok {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": "room not found",
-		})
+		_ = ctx.Error(ports.ErrRoomNotFound)
 		return
 	}
 
@@ -69,15 +64,11 @@ func (rC *RoomsController) GetByUUID(ctx *gin.Context) {
 
 	room, ok, err := rC.fileShareService.Room(ctx.Request.Context(), roomId)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		_ = ctx.Error(err)
 		return
 	}
 	if !ok {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": "room not found",
-		})
+		_ = ctx.Error(ports.ErrRoomNotFound)
 		return
 	}
 
@@ -90,9 +81,7 @@ func (rC *RoomsController) Create(ctx *gin.Context) {
 	requestData := dto.CreateRoomRequest{}
 
 	if err := ctx.ShouldBind(&requestData); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "Could not parse request data",
-		})
+		_ = ctx.Error(apierrors.ErrInvalidRequest)
 		return
 	}
 
@@ -100,16 +89,12 @@ func (rC *RoomsController) Create(ctx *gin.Context) {
 
 	room, token, err := rC.fileShareService.CreateRoom(ctx.Request.Context(), requestData.Password, duration)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		_ = ctx.Error(err)
 		return
 	}
 
 	if err := rC.eventPublisher.Publish(ports.Event{Name: ports.EventRoomCreate, Data: room.ID}); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		_ = ctx.Error(err)
 		return
 	}
 
@@ -130,14 +115,12 @@ func (rC *RoomsController) Delete(ctx *gin.Context) {
 	token := middleware.MustToken(ctx)
 
 	if err := rC.fileShareService.DeleteRoom(ctx.Request.Context(), roomId, token); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		_ = ctx.Error(err)
 		return
 	}
 
 	if err := rC.eventPublisher.Publish(ports.Event{Name: ports.EventRoomDelete, Data: roomId}); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		_ = ctx.Error(err)
 		return
 	}
 
