@@ -190,7 +190,7 @@ function wireEvents() {
             directDialog.disableCreateCodeButton(true)
             directDialog.disableSendButton(true)
             try {
-                await direct.upload(els.directCodeValue().textContent?.trim() ?? '', fileToUpload)
+                await direct.upload(els.directCodeInput().value?.trim() ?? '', fileToUpload)
                 directDialog.clearFileInput()
             } catch (error) {
                 directDialog.setError(`${error}`.replace("Error:", ""))
