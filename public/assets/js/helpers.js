@@ -59,4 +59,16 @@ export function shortId(id) {
 
 export async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
-} 
+}
+
+export function generateNumericCode(length = 12) {
+    const bytes = new Uint8Array(length)
+    crypto.getRandomValues(bytes)
+
+    let out = ''
+    for (let i = 0; i < length; i++) {
+        out += (bytes[i] % 10).toString()
+    }
+
+    return out
+}
