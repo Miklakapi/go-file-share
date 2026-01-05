@@ -10,13 +10,14 @@ export async function api(path, options = {}, timeout = 10000) {
 
     let res
     try {
+        const signal = timeout ? AbortSignal.timeout(timeout) : undefined
         res = await fetch(url, {
             credentials: 'include',
             headers,
+            signal,
             ...options,
-            signal: AbortSignal.timeout(timeout)
         })
-    } catch {
+    } catch (error) {
         throw Error('Request timeout')
     }
 

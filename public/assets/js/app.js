@@ -9,6 +9,7 @@ import { useFilesDataTable } from "./fileDataTable.js"
 import { formatDate, generateNumericCode, sleep } from "./helpers.js"
 import { useSSE } from "./sse.js"
 import { useDirectDialog } from "./directDialog.js"
+import { useDirect } from "./direct.js"
 
 const els = {
     // Others
@@ -78,6 +79,7 @@ const filesDataTable = useFilesDataTable(els.filesTableBody, els.filesEmpty)
 const rooms = useRooms()
 const files = useFiles()
 const sse = useSSE()
+const direct = useDirect()
 
 function show(view) {
     document.getElementById('view-list').hidden = view !== 'list'
@@ -138,11 +140,20 @@ function wireEvents() {
         }
 
         if (e.submitter.value === 'generateCode') {
+            const code = generateNumericCode(16)
             directDialog.setError("")
-            directDialog.setCode(generateNumericCode(16))
+            directDialog.setCode(code)
             directDialog.disableCreateCodeButton(true)
             directDialog.disableSendBox(true)
             directDialog.showCodeBox(true)
+            try {
+                await direct.download(code)
+                directDialog.clearCopySection()
+                directDialog.disableCreateCodeButton(false)
+                directDialog.disableSendBox(false)
+            } catch (error) {
+                directDialog.setError(`${error}`.replace("Error:", ""))
+            }
             return
         }
 
@@ -158,6 +169,7 @@ function wireEvents() {
         }
 
         if (e.submitter.value === 'cancelCode') {
+            direct.abort()
             directDialog.clearCopySection()
             directDialog.disableCreateCodeButton(false)
             directDialog.disableSendBox(false)
@@ -177,10 +189,15 @@ function wireEvents() {
 
             directDialog.disableCreateCodeButton(true)
             directDialog.disableSendButton(true)
-            await sleep(5000)
-            directDialog.disableCreateCodeButton(false)
-            directDialog.disableSendButton(false)
-            directDialog.clearFileInput()
+            try {
+                await direct.upload(els.directCodeValue().textContent?.trim() ?? '', fileToUpload)
+                directDialog.clearFileInput()
+            } catch (error) {
+                directDialog.setError(`${error}`.replace("Error:", ""))
+            } finally {
+                directDialog.disableCreateCodeButton(false)
+                directDialog.disableSendButton(false)
+            }
             return
         }
     })
