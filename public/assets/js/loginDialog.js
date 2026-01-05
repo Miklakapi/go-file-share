@@ -11,8 +11,8 @@ export function useLoginDialog(dialogElement, idField, passwordField, submitButt
         dialogElement().close()
     }
 
-    function disableSubmitButton(disable = true) {
-        submitButton().disable = disable
+    function disableSubmitButton(disabled = true) {
+        submitButton().disabled = disabled
     }
 
     function setError(msg) {

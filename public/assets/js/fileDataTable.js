@@ -43,14 +43,14 @@ export function useFilesDataTable(tableBodyElement, emptyElement) {
         }
     }
 
-    function disableRowButtons(id, disable = true) {
+    function disableRowButtons(id, disabled = true) {
         const tbody = tableBodyElement()
         const tr = tbody.querySelector(`tr[data-id="${id}"]`)
         if (!tr) return
 
         const buttons = tr.querySelectorAll('button')
         buttons.forEach(btn => {
-            btn.disabled = disable
+            btn.disabled = disabled
         })
     }
 
