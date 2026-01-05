@@ -1,4 +1,4 @@
-import { api } from "./helpers.js"
+import { api, filenameFromDisposition, triggerBrowserDownload } from "./helpers.js"
 
 export function useDirect() {
     let controller = null
@@ -8,9 +8,16 @@ export function useDirect() {
         controller = new AbortController()
 
         try {
-            await api(`/direct/${code}/download`, {
+            const res = await api(`/direct/${code}/download`, {
+                responseType: 'blob',
                 signal: controller.signal
             }, 0)
+
+            const blob = res.data
+            const filename = filenameFromDisposition(res.headers?.['content-disposition']
+                || res.headers?.get?.('content-disposition'))
+                || 'file'
+            triggerBrowserDownload(blob, filename)
         } catch (err) {
             if (err.name === 'AbortError') return
             throw err

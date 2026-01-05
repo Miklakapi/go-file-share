@@ -73,3 +73,27 @@ export function generateNumericCode(length = 12) {
 
     return out
 }
+
+export function triggerBrowserDownload(blob, filename) {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename || 'download'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+}
+
+export function filenameFromDisposition(disposition) {
+    if (!disposition) return null
+
+    const match = disposition.match(/filename\*?=(?:UTF-8'')?("?)([^";]+)\1/i)
+    if (!match) return null
+
+    try {
+        return decodeURIComponent(match[2])
+    } catch {
+        return match[2]
+    }
+}

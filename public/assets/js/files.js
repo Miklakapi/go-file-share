@@ -1,4 +1,4 @@
-import { api } from "./helpers.js"
+import { api, filenameFromDisposition, triggerBrowserDownload } from "./helpers.js"
 
 export function useFiles() {
     async function get(roomId) {
@@ -39,30 +39,6 @@ export function useFiles() {
         if (!confirm('Delete this file?')) return false
         await api(`/rooms/${roomId}/files/${fileId}`, { method: 'DELETE' })
         return true
-    }
-
-    function filenameFromDisposition(disposition) {
-        if (!disposition) return null
-
-        const match = disposition.match(/filename\*?=(?:UTF-8'')?("?)([^";]+)\1/i)
-        if (!match) return null
-
-        try {
-            return decodeURIComponent(match[2])
-        } catch {
-            return match[2]
-        }
-    }
-
-    function triggerBrowserDownload(blob, filename) {
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = filename || 'download'
-        document.body.appendChild(a)
-        a.click()
-        a.remove()
-        URL.revokeObjectURL(url)
     }
 
     return {
