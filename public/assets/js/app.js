@@ -6,8 +6,9 @@ import { useFiles } from "./files.js"
 import { useRouter } from "./router.js"
 import { useToast } from "./toast.js"
 import { useFilesDataTable } from "./fileDataTable.js"
-import { formatDate } from "./helpers.js"
+import { formatDate, generateNumericCode, sleep } from "./helpers.js"
 import { useSSE } from "./sse.js"
+import { useDirectDialog } from "./directDialog.js"
 
 const els = {
     // Others
@@ -45,6 +46,20 @@ const els = {
     //// File table
     filesTableBody: () => document.querySelector('#filesTable tbody'),
     filesEmpty: () => document.getElementById('filesEmpty'),
+    //// Direct upload
+    directDialog: () => document.getElementById('directDialog'),
+    openDirectBtn: () => document.getElementById('openDirectBtn'),
+    //// Direct upload dialog content
+    directForm: () => document.getElementById('directForm'),
+    directReceiveBtn: () => document.getElementById('directReceiveBtn'),
+    directCodeBox: () => document.getElementById('directCodeBox'),
+    directCodeValue: () => document.getElementById('directCodeValue'),
+    directCopyBtn: () => document.getElementById('directCopyBtn'),
+    directSendBox: () => document.getElementById('directSendBox'),
+    directCodeInput: () => document.getElementById('directCodeInput'),
+    directFileInput: () => document.getElementById('directFileInput'),
+    directSendBtn: () => document.getElementById('directSendBtn'),
+    directDialogError: () => document.getElementById('directError'),
 }
 
 let suppressRoomsRefresh = false
@@ -52,6 +67,11 @@ let suppressRoomsRefresh = false
 const router = useRouter()
 const toast = useToast(els.toast)
 const createDialog = useCreateDialog(els.createDialog, els.createDialogPassword, els.createDialogLifespan, els.createDialogSubmitBtn, els.createDialogError)
+const directDialog = useDirectDialog(
+    els.directDialog, els.directDialogError,
+    els.directCodeBox, els.directReceiveBtn, els.directCodeValue,
+    els.directSendBox, els.directFileInput, els.directSendBtn
+)
 const loginDialog = useLoginDialog(els.loginDialog, els.loginDialogId, els.loginDialogPassword, els.loginDialogSubmitBtn, els.loginDialogError)
 const roomDataTable = useRoomDataTable(els.tableBody, els.emptyState)
 const filesDataTable = useFilesDataTable(els.filesTableBody, els.filesEmpty)
@@ -66,6 +86,8 @@ function show(view) {
 
 function wireEvents() {
     els.openCreateDialogBtn().addEventListener('click', createDialog.open)
+    els.openDirectBtn().addEventListener('click', directDialog.open)
+    els.backButton().addEventListener('click', () => router.navigate('/'))
 
     els.createDialogForm().addEventListener('submit', async (e) => {
         e.preventDefault()
@@ -105,6 +127,61 @@ function wireEvents() {
             loginDialog.setError(`${error}`.replace("Error:", ""))
         } finally {
             loginDialog.disableSubmitButton(false)
+        }
+    })
+
+    els.directForm().addEventListener('submit', async (e) => {
+        e.preventDefault()
+        if (e.submitter.value === 'cancel') {
+            directDialog.close()
+            return
+        }
+
+        if (e.submitter.value === 'generateCode') {
+            directDialog.setError("")
+            directDialog.setCode(generateNumericCode(16))
+            directDialog.disableCreateCodeButton(true)
+            directDialog.disableSendBox(true)
+            directDialog.showCodeBox(true)
+            return
+        }
+
+        if (e.submitter.value === 'copyCode') {
+            try {
+                await directDialog.copyCode()
+            } catch (error) {
+                toast.show(error, 'error')
+                return
+            }
+            toast.show('Copied!', 'success')
+            return
+        }
+
+        if (e.submitter.value === 'cancelCode') {
+            directDialog.clearCopySection()
+            directDialog.disableCreateCodeButton(false)
+            directDialog.disableSendBox(false)
+            return
+        }
+
+        if (e.submitter.value === 'sendFile') {
+            directDialog.setError("")
+            const fileInput = els.directFileInput()
+            let fileToUpload = fileInput?.files ? Array.from(fileInput.files) : []
+            if (fileToUpload.length === 0) {
+                directDialog.setError("No file to upload")
+                toast.show("No file to upload", 'error')
+                return
+            }
+            fileToUpload = fileToUpload[0]
+
+            directDialog.disableCreateCodeButton(true)
+            directDialog.disableSendButton(true)
+            await sleep(5000)
+            directDialog.disableCreateCodeButton(false)
+            directDialog.disableSendButton(false)
+            directDialog.clearFileInput()
+            return
         }
     })
 
@@ -186,7 +263,6 @@ function wireEvents() {
 
             filesDataTable.loadData(await files.get(id))
         } catch (error) {
-            console.log(error)
             toast.show(error, 'error')
         } finally {
             els.uploadBtn().disabled = false
@@ -234,8 +310,6 @@ function wireEvents() {
             }
         }
     })
-
-    els.backButton().addEventListener('click', () => router.navigate('/'))
 
     sse.onMessage(async e => console.info(e.data))
     sse.onEvent("RoomsChange", async e => {

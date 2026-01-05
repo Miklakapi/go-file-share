@@ -10,6 +10,8 @@
     --info: #6d97f1;
     --shadow: 0 6px 20px rgba(0, 0, 0, .08);
     --radius: 10px;
+    --direct: #0ea5a4;
+    --direct-hover: #0d9488;
 }
 
 * {
@@ -174,8 +176,13 @@ body {
     font-size: 13px;
 }
 
+.disabled {
+    opacity: .7;
+    pointer-events: none;
+}
+
 button:disabled {
-    opacity: .9;
+    opacity: .7;
     pointer-events: none;
 }
 
@@ -330,4 +337,83 @@ button:disabled {
 .meta-value {
     font-weight: 600;
     font-size: 13px;
+}
+
+.dialog-wide {
+    width: min(760px, calc(100vw - 32px));
+}
+
+.direct-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+@media (min-width: 720px) {
+    .direct-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.direct-card {
+    border: 1px solid rgba(0, 0, 0, .08);
+    border-radius: 12px;
+    padding: 12px;
+    background: rgba(0, 0, 0, .02);
+}
+
+.direct-title {
+    margin: 0 0 6px;
+    font-size: 14px;
+}
+
+.direct-desc {
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.code-box {
+    margin-top: 10px;
+    border: 1px dashed rgba(0, 0, 0, .18);
+    border-radius: 12px;
+    padding: 10px;
+    background: #fff;
+}
+
+.code-value {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 18px;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #f3f4f6;
+    border: 1px solid var(--line);
+    text-align: center;
+    user-select: all;
+}
+
+.code-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.small {
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.btn.direct {
+    background: var(--direct);
+    border-color: var(--direct);
+    color: #fff;
+}
+
+.btn.direct:hover {
+    background: var(--direct-hover);
+    border-color: var(--direct-hover);
 }
