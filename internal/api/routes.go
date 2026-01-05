@@ -13,6 +13,7 @@ type ControllerBag struct {
 	RoomsController  *controllers.RoomsController
 	FilesController  *controllers.FilesController
 	SSEController    *controllers.SSEController
+	DirectController *controllers.DirectController
 	AuthMiddleware   gin.HandlerFunc
 	ErrorMiddleware  gin.HandlerFunc
 }
@@ -27,6 +28,10 @@ func RegisterRoutes(router *gin.Engine, cB *ControllerBag) {
 	api.GET("/ping", cB.HealthController.Ping)
 	api.GET("/health", cB.HealthController.Health)
 	api.GET("/sse", cB.SSEController.SSE)
+
+	direct := api.Group("/direct/:code")
+	direct.GET("/download", cB.DirectController.DownloadStream)
+	direct.POST("/upload", cB.DirectController.UploadStream)
 
 	rooms := api.Group("/rooms")
 	rooms.GET("", cB.RoomsController.Get)
