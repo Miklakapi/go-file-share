@@ -21,4 +21,5 @@ var (
 
 	ErrTransferCodeInvalidLength = errors.New("transfer code invalid length")
 	ErrTransferCodeNotFound      = errors.New("transfer code not found")
+	ErrTransferCodeExists        = errors.New("transfer code exists")
 )

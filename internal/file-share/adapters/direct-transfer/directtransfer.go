@@ -29,6 +29,19 @@ func (dT *DirectTransfer) Receive(ctx context.Context, code string) (*ports.Tran
 	if !codeOk(code) {
 		return nil, ports.ErrTransferCodeInvalidLength
 	}
+
+	dT.mu.RLock()
+	_, ok := dT.connections[code]
+	dT.mu.RUnlock()
+	if ok {
+		return nil, ports.ErrTransferCodeExists
+	}
+
+	c := connection{}
+
+	dT.mu.Lock()
+	dT.connections[code] = &c
+	dT.mu.Unlock()
 	panic("TODO")
 }
 
@@ -36,7 +49,26 @@ func (dT *DirectTransfer) Send(code string, filename string, src io.Reader) erro
 	if !codeOk(code) {
 		return ports.ErrTransferCodeInvalidLength
 	}
-	panic("TODO")
+
+	dT.mu.RLock()
+	connection, ok := dT.connections[code]
+	dT.mu.RUnlock()
+
+	if !ok {
+		return ports.ErrTransferCodeNotFound
+	}
+
+	pr, pw := io.Pipe()
+	defer func() { _ = pw.Close() }()
+	transfer := ports.Transfer{Reader: pr, Filename: filename}
+
+	dT.mu.Lock()
+	connection.transfer = transfer
+	dT.mu.Unlock()
+
+	_, err := io.Copy(pw, src)
+
+	return err
 }
 
 func (dT *DirectTransfer) Cancel(code string) {
