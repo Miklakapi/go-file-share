@@ -13,6 +13,7 @@ import (
 	"github.com/Miklakapi/go-file-share/internal/api/controllers"
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
 	"github.com/Miklakapi/go-file-share/internal/config"
+	directtransfer "github.com/Miklakapi/go-file-share/internal/file-share/adapters/direct-transfer"
 	eventbus "github.com/Miklakapi/go-file-share/internal/file-share/adapters/event-bus"
 	filestore "github.com/Miklakapi/go-file-share/internal/file-share/adapters/file-store"
 	roomrepository "github.com/Miklakapi/go-file-share/internal/file-share/adapters/room-repository"
@@ -33,6 +34,7 @@ func main() {
 
 	roomRepo := roomrepository.NewSqliteRepo()
 	eventBus := eventbus.New()
+	directTransfer := directtransfer.New()
 	fileStore := filestore.DiskStore{}
 	hasher := security.BcryptHasher{Cost: 12}
 	tokenService := security.NewJwtService(config.JWTSecret)
@@ -61,7 +63,7 @@ func main() {
 		RoomsController:  controllers.NewRoomsController(fileShareService, eventBus),
 		FilesController:  controllers.NewFilesController(fileShareService),
 		SSEController:    controllers.NewSSEController(appCtx, eventBus),
-		DirectController: controllers.NewDirectController(),
+		DirectController: controllers.NewDirectController(directTransfer),
 		AuthMiddleware:   middleware.AuthMiddleware(tokenService),
 		ErrorMiddleware:  middleware.ErrorMiddleware(),
 	})
