@@ -18,4 +18,8 @@ var (
 	ErrTokenRoomMismatch = errors.New("token room mismatch")
 
 	ErrPublishPanic = errors.New("eventbus publish panic")
+
+	ErrTransferCodeTooShort = errors.New("transfer code too short")
+	ErrTransferCodeTooLong  = errors.New("transfer code too long")
+	ErrTransferCodeNotFound = errors.New("transfer code not found")
 )
