@@ -19,7 +19,6 @@ var (
 
 	ErrPublishPanic = errors.New("eventbus publish panic")
 
-	ErrTransferCodeTooShort = errors.New("transfer code too short")
-	ErrTransferCodeTooLong  = errors.New("transfer code too long")
-	ErrTransferCodeNotFound = errors.New("transfer code not found")
+	ErrTransferCodeInvalidLength = errors.New("transfer code invalid length")
+	ErrTransferCodeNotFound      = errors.New("transfer code not found")
 )
