@@ -12,6 +12,6 @@ type Transfer struct {
 
 type DirectTransfer interface {
 	Receive(ctx context.Context, code string) (*Transfer, error)
-	Send(code string, filename string, src io.Reader) error
-	Cancel(code string)
+	Send(ctx context.Context, code string, filename string, src io.Reader) error
+	Cancel(code string) error
 }
