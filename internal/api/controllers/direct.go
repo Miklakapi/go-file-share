@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	apierrors "github.com/Miklakapi/go-file-share/internal/api/api-errors"
 	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 	"github.com/gin-gonic/gin"
 )
@@ -23,13 +24,11 @@ func NewDirectController(directTransfer ports.DirectTransfer) *DirectController 
 func (dC *DirectController) DownloadStream(ctx *gin.Context) {
 	code := strings.TrimSpace(ctx.Param("code"))
 	if code == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "Bad Request",
-		})
+		_ = ctx.Error(apierrors.ErrInvalidRequest)
 		return
 	}
 
-	transfer, err := dC.directTransfer.Receive(ctx, code)
+	transfer, err := dC.directTransfer.Receive(ctx.Request.Context(), code)
 	if err != nil {
 		_ = ctx.Error(err)
 		return
@@ -46,15 +45,13 @@ func (dC *DirectController) DownloadStream(ctx *gin.Context) {
 func (dC *DirectController) UploadStream(ctx *gin.Context) {
 	code := strings.TrimSpace(ctx.Param("code"))
 	if code == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "Bad Request",
-		})
+		_ = ctx.Error(apierrors.ErrInvalidRequest)
 		return
 	}
 
 	fh, err := ctx.FormFile("file")
 	if err != nil {
-		_ = ctx.Error(err)
+		_ = ctx.Error(apierrors.ErrInvalidFile)
 		return
 	}
 
@@ -65,10 +62,8 @@ func (dC *DirectController) UploadStream(ctx *gin.Context) {
 	}
 	defer func() { _ = src.Close() }()
 
-	if err := dC.directTransfer.Send(code, fh.Filename, src); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "TODO",
-		})
+	if err := dC.directTransfer.Send(ctx.Request.Context(), code, fh.Filename, src); err != nil {
+		_ = ctx.Error(err)
 		return
 	}
 

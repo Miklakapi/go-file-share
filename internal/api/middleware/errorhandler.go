@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -106,10 +107,25 @@ func MapErrors(err error) HTTPError {
 		return HTTPError{Status: http.StatusInternalServerError, Code: "EVENTBUS_ERROR", Message: "Internal server error"}
 
 	// ======================
+	// DIRECT TRANSFER
+	// ======================
+	case errors.Is(err, ports.ErrTransferCodeInvalidLength):
+		return HTTPError{Status: http.StatusBadRequest, Code: "TRANSFER_CODE_INVALID", Message: "Invalid transfer code"}
+
+	case errors.Is(err, ports.ErrTransferCodeNotFound):
+		return HTTPError{Status: http.StatusNotFound, Code: "TRANSFER_CODE_NOT_FOUND", Message: "Transfer code not found"}
+
+	case errors.Is(err, ports.ErrTransferCodeExists):
+		return HTTPError{Status: http.StatusConflict, Code: "TRANSFER_CODE_EXISTS", Message: "Transfer code already in use"}
+
+	// ======================
 	// API
 	// ======================
 	case errors.Is(err, apierrors.ErrInvalidRequest):
 		return HTTPError{Status: http.StatusBadRequest, Code: "INVALID_REQUEST", Message: "Invalid request payload"}
+
+	case errors.Is(err, context.Canceled):
+		return HTTPError{Status: 499, Code: "REQUEST_CANCELLED", Message: "Request cancelled"}
 
 	// ======================
 	// FALLBACK
