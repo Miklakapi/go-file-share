@@ -1,7 +1,8 @@
-package roomrepository
+package sqliterepository
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/Miklakapi/go-file-share/internal/file-share/domain"
@@ -10,14 +11,14 @@ import (
 )
 
 type SqliteRepo struct {
-	rooms map[uuid.UUID]*domain.Room
+	db *sql.DB
 }
 
 var _ ports.RoomRepository = (*SqliteRepo)(nil)
 
-func NewSqliteRepo() *SqliteRepo {
+func New(db *sql.DB) *SqliteRepo {
 	return &SqliteRepo{
-		rooms: make(map[uuid.UUID]*domain.Room),
+		db: db,
 	}
 }
 

@@ -1,4 +1,4 @@
-package roomrepository
+package memoryrepository
 
 import (
 	"context"
@@ -17,7 +17,7 @@ type MemoryRepo struct {
 
 var _ ports.RoomRepository = (*MemoryRepo)(nil)
 
-func NewMemoryRepo() *MemoryRepo {
+func New() *MemoryRepo {
 	return &MemoryRepo{
 		rooms: make(map[uuid.UUID]*domain.Room),
 	}

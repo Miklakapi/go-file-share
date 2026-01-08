@@ -16,7 +16,7 @@ import (
 	directtransfer "github.com/Miklakapi/go-file-share/internal/file-share/adapters/direct-transfer"
 	eventbus "github.com/Miklakapi/go-file-share/internal/file-share/adapters/event-bus"
 	filestore "github.com/Miklakapi/go-file-share/internal/file-share/adapters/file-store"
-	roomrepository "github.com/Miklakapi/go-file-share/internal/file-share/adapters/room-repository"
+	memoryrepository "github.com/Miklakapi/go-file-share/internal/file-share/adapters/room-repository/memory-repository"
 	"github.com/Miklakapi/go-file-share/internal/file-share/adapters/security"
 	fileShare "github.com/Miklakapi/go-file-share/internal/file-share/application"
 	fileShareDomain "github.com/Miklakapi/go-file-share/internal/file-share/domain"
@@ -32,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	roomRepo := roomrepository.NewMemoryRepo()
+	roomRepo := memoryrepository.New()
 	eventBus := eventbus.New()
 	directTransfer := directtransfer.New()
 	fileStore := filestore.DiskStore{}

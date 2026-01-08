@@ -25,6 +25,8 @@ type Config struct {
 	MaxTokenLifespan time.Duration
 	CleanupInterval  time.Duration
 
+	SqlitePath string
+
 	JWTSecret []byte
 }
 
@@ -90,6 +92,8 @@ func Load() (Config, error) {
 	if cfg.CleanupInterval <= 0 {
 		return cfg, fmt.Errorf("CLEANUP_INTERVAL must be positive")
 	}
+
+	cfg.SqlitePath = getEnv("SQLITE_PATH", "./sqlite.db")
 
 	secret := make([]byte, 32)
 	if _, err := rand.Read(secret); err != nil {

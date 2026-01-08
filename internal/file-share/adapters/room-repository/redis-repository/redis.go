@@ -1,4 +1,4 @@
-package roomrepository
+package redisrepository
 
 import (
 	"context"
@@ -15,7 +15,7 @@ type RedisRepo struct {
 
 var _ ports.RoomRepository = (*RedisRepo)(nil)
 
-func NewRedisRepo() *RedisRepo {
+func New() *RedisRepo {
 	return &RedisRepo{
 		rooms: make(map[uuid.UUID]*domain.Room),
 	}
