@@ -39,6 +39,11 @@ func main() {
 	}
 	defer sqliteDb.Conn.Close()
 
+	err = sqliterepository.MakeMigrations(appCtx, sqliteDb.Conn, "./sqlite-migrations")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	roomRepo := sqliterepository.New(sqliteDb.Conn)
 	eventBus := eventbus.New()
 	directTransfer := directtransfer.New()
