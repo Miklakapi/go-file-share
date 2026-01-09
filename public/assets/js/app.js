@@ -135,6 +135,7 @@ function wireEvents() {
     els.directForm().addEventListener('submit', async (e) => {
         e.preventDefault()
         if (e.submitter.value === 'cancel') {
+            direct.abort()
             directDialog.close()
             return
         }
