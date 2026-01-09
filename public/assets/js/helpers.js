@@ -18,6 +18,9 @@ export async function api(path, options = {}, timeout = 10000) {
             ...options,
         })
     } catch (error) {
+        if (options.signal?.aborted) {
+            throw new DOMException('Aborted', 'AbortError');
+        }
         throw Error('Request timeout')
     }
 
