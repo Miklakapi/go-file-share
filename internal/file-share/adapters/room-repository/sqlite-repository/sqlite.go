@@ -23,41 +23,81 @@ func New(db *sql.DB) *SqliteRepo {
 }
 
 func (r *SqliteRepo) Get(ctx context.Context, roomID uuid.UUID) (*domain.Room, bool, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, false, err
+	}
+
 	panic("TODO")
 }
 
 func (r *SqliteRepo) List(ctx context.Context) ([]*domain.Room, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	panic("TODO")
 }
 
 func (r *SqliteRepo) Create(ctx context.Context, room *domain.Room) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	panic("TODO")
 }
 
 func (r *SqliteRepo) Update(ctx context.Context, room *domain.Room) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	panic("TODO")
 }
 
 func (r *SqliteRepo) Delete(ctx context.Context, roomID uuid.UUID) ([]string, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	panic("TODO")
 }
 
 func (r *SqliteRepo) DeleteExpired(ctx context.Context, now time.Time) ([]domain.ExpiredCleanup, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	panic("TODO")
 }
 
 func (r *SqliteRepo) RemoveToken(ctx context.Context, roomID uuid.UUID, token string) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+
 	panic("TODO")
 }
 
 func (r *SqliteRepo) AddToken(ctx context.Context, roomID uuid.UUID, token string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	panic("TODO")
 }
 
 func (r *SqliteRepo) AddFileByToken(ctx context.Context, roomID uuid.UUID, token string, file *domain.RoomFile) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+
 	panic("TODO")
 }
 
 func (r *SqliteRepo) DeleteFileByToken(ctx context.Context, roomID, fileID uuid.UUID, token string) (string, bool, error) {
+	if err := ctx.Err(); err != nil {
+		return "", false, err
+	}
+
 	panic("TODO")
 }
