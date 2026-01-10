@@ -44,7 +44,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	roomRepo := sqliterepository.New(sqliteDb.Conn)
+	roomRepo := sqliterepository.New(appCtx, sqliteDb.Conn)
 	eventBus := eventbus.New()
 	directTransfer := directtransfer.New()
 	fileStore := filestore.DiskStore{}

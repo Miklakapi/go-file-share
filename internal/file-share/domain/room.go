@@ -36,6 +36,16 @@ func NewRoom(hashedPassword string, lifespan time.Duration) (*Room, error) {
 	return r, nil
 }
 
+func HydrateRoom(id uuid.UUID, passwordHash string, expiresAt time.Time) *Room {
+	return &Room{
+		ID:        id,
+		ExpiresAt: expiresAt,
+		Files:     make(map[uuid.UUID]*RoomFile),
+		tokens:    make(map[string]bool),
+		password:  passwordHash,
+	}
+}
+
 func (r *Room) HasToken(token string) bool {
 	if token == "" || r.tokens == nil {
 		return false
