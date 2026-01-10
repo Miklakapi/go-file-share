@@ -106,6 +106,17 @@ func (r *Room) ListFiles() []*RoomFile {
 	return files
 }
 
+func (r *Room) ListTokens() []string {
+	if r.tokens == nil {
+		return nil
+	}
+	tokens := make([]string, 0, len(r.tokens))
+	for t := range r.tokens {
+		tokens = append(tokens, t)
+	}
+	return tokens
+}
+
 func (r *Room) AddFile(file *RoomFile) error {
 	if file == nil {
 		return ErrInvalidFile

@@ -33,10 +33,6 @@ func (r *RedisRepo) Create(ctx context.Context, room *domain.Room) error {
 	panic("TODO")
 }
 
-func (r *RedisRepo) Update(ctx context.Context, room *domain.Room) error {
-	panic("TODO")
-}
-
 func (r *RedisRepo) Delete(ctx context.Context, roomID uuid.UUID) ([]string, error) {
 	panic("TODO")
 }

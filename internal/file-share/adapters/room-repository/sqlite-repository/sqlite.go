@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Miklakapi/go-file-share/internal/file-share/domain"
@@ -310,16 +311,53 @@ func (r *SqliteRepo) Create(ctx context.Context, room *domain.Room) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+	if room == nil {
+		return nil
+	}
 
-	panic("TODO")
-}
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
 
-func (r *SqliteRepo) Update(ctx context.Context, room *domain.Room) error {
-	if err := ctx.Err(); err != nil {
+	_, err = tx.ExecContext(ctx, `
+		INSERT INTO rooms (id, password_hash, expires_at, created_at)
+		VALUES (?, ?, ?, CAST(strftime('%s','now') AS INTEGER))
+	`, room.ID.String(), room.Password(), room.ExpiresAt.Unix())
+	if err != nil {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			return ports.ErrRoomAlreadyExists
+		}
 		return err
 	}
 
-	panic("TODO")
+	tokens := room.ListTokens()
+	if len(tokens) > 0 {
+		stmt, err := tx.PrepareContext(ctx, `
+			INSERT INTO room_tokens (room_id, token, created_at)
+			VALUES (?, ?, CAST(strftime('%s','now') AS INTEGER))
+		`)
+		if err != nil {
+			return err
+		}
+		defer stmt.Close()
+
+		for _, t := range tokens {
+			if t == "" {
+				continue
+			}
+			_, err := stmt.ExecContext(ctx, room.ID.String(), t)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *SqliteRepo) Delete(ctx context.Context, roomID uuid.UUID) ([]string, error) {

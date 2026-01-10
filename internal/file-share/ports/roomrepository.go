@@ -12,7 +12,6 @@ type RoomRepository interface {
 	Get(ctx context.Context, roomID uuid.UUID) (*domain.Room, bool, error)
 	List(ctx context.Context) ([]*domain.Room, error)
 	Create(ctx context.Context, room *domain.Room) error
-	Update(ctx context.Context, room *domain.Room) error
 	Delete(ctx context.Context, roomID uuid.UUID) ([]string, error)
 	DeleteExpired(ctx context.Context, now time.Time) ([]domain.ExpiredCleanup, error)
 	RemoveToken(ctx context.Context, roomID uuid.UUID, token string) (bool, error)

@@ -80,25 +80,6 @@ func (r *MemoryRepo) Create(ctx context.Context, room *domain.Room) error {
 	return nil
 }
 
-func (r *MemoryRepo) Update(ctx context.Context, room *domain.Room) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	if room == nil {
-		return nil
-	}
-
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if _, ok := r.rooms[room.ID]; !ok {
-		return ports.ErrRoomNotFound
-	}
-
-	r.rooms[room.ID] = room.Clone()
-	return nil
-}
-
 func (r *MemoryRepo) Delete(ctx context.Context, roomID uuid.UUID) ([]string, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
