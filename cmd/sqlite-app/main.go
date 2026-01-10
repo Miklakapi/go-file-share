@@ -81,10 +81,10 @@ func main() {
 	})
 
 	srv := &http.Server{
-		Addr:         ":" + config.Port,
-		Handler:      engine,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		Addr:              ":" + config.Port,
+		Handler:           engine,
+		ReadTimeout:       10 * time.Second,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	go func() {
