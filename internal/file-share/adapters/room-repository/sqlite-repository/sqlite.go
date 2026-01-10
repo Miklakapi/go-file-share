@@ -365,7 +365,60 @@ func (r *SqliteRepo) Delete(ctx context.Context, roomID uuid.UUID) ([]string, er
 		return nil, err
 	}
 
-	panic("TODO")
+	roomIDString := roomID.String()
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	var exists int
+	err = tx.QueryRowContext(ctx, `SELECT 1 FROM rooms WHERE id = ? LIMIT 1`, roomIDString).Scan(&exists)
+	if err == sql.ErrNoRows {
+		return nil, ports.ErrRoomNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.QueryContext(ctx, `
+		SELECT path
+		FROM room_files
+		WHERE room_id = ?
+	`, roomIDString)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	paths := make([]string, 0)
+	for rows.Next() {
+		var p string
+		if err := rows.Scan(&p); err != nil {
+			return nil, err
+		}
+		if p != "" {
+			paths = append(paths, p)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	res, err := tx.ExecContext(ctx, `DELETE FROM rooms WHERE id = ?`, roomIDString)
+	if err != nil {
+		return nil, err
+	}
+	aff, _ := res.RowsAffected()
+	if aff == 0 {
+		return nil, ports.ErrRoomNotFound
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return paths, nil
 }
 
 func (r *SqliteRepo) DeleteExpired(ctx context.Context, now time.Time) ([]domain.ExpiredCleanup, error) {
@@ -373,31 +426,216 @@ func (r *SqliteRepo) DeleteExpired(ctx context.Context, now time.Time) ([]domain
 		return nil, err
 	}
 
-	panic("TODO")
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	nowSec := now.Unix()
+
+	idRows, err := tx.QueryContext(ctx, `
+		SELECT id
+		FROM rooms
+		WHERE expires_at < ?
+	`, nowSec)
+	if err != nil {
+		return nil, err
+	}
+	defer idRows.Close()
+
+	expiredIDs := make([]string, 0, 50)
+	for idRows.Next() {
+		var idStr string
+		if err := idRows.Scan(&idStr); err != nil {
+			return nil, err
+		}
+		expiredIDs = append(expiredIDs, idStr)
+	}
+	if err := idRows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(expiredIDs) == 0 {
+		if err := tx.Commit(); err != nil {
+			return nil, err
+		}
+		return []domain.ExpiredCleanup{}, nil
+	}
+
+	pathsByRoom := make(map[string][]string, len(expiredIDs))
+	chunks := chunkStrings(expiredIDs, r.inLimit)
+
+	for _, ch := range chunks {
+		q := fmt.Sprintf(`
+			SELECT room_id, path
+			FROM room_files
+			WHERE room_id IN (%s)
+		`, makePlaceholders(len(ch)))
+
+		rows, err := tx.QueryContext(ctx, q, argsFromStrings(ch)...)
+		if err != nil {
+			return nil, err
+		}
+
+		for rows.Next() {
+			var roomIDStr, p string
+			if err := rows.Scan(&roomIDStr, &p); err != nil {
+				_ = rows.Close()
+				return nil, err
+			}
+			if p == "" {
+				continue
+			}
+			pathsByRoom[roomIDStr] = append(pathsByRoom[roomIDStr], p)
+		}
+		if err := rows.Err(); err != nil {
+			_ = rows.Close()
+			return nil, err
+		}
+		_ = rows.Close()
+	}
+
+	for _, ch := range chunks {
+		q := fmt.Sprintf(`DELETE FROM rooms WHERE id IN (%s)`, makePlaceholders(len(ch)))
+		if _, err := tx.ExecContext(ctx, q, argsFromStrings(ch)...); err != nil {
+			return nil, err
+		}
+	}
+
+	out := make([]domain.ExpiredCleanup, 0, len(expiredIDs))
+	for _, idStr := range expiredIDs {
+		uid, err := uuid.Parse(idStr)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, domain.ExpiredCleanup{
+			RoomID: uid,
+			Paths:  pathsByRoom[idStr],
+		})
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (r *SqliteRepo) RemoveToken(ctx context.Context, roomID uuid.UUID, token string) (bool, error) {
 	if err := ctx.Err(); err != nil {
 		return false, err
 	}
+	if token == "" {
+		return false, nil
+	}
 
-	panic("TODO")
+	res, err := r.db.ExecContext(ctx, `
+		DELETE FROM room_tokens
+		WHERE room_id = ? AND token = ?
+	`, roomID.String(), token)
+	if err != nil {
+		return false, err
+	}
+	aff, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return aff > 0, nil
 }
 
 func (r *SqliteRepo) AddToken(ctx context.Context, roomID uuid.UUID, token string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+	if token == "" {
+		return domain.ErrEmptyToken
+	}
 
-	panic("TODO")
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	var exists int
+	err = tx.QueryRowContext(ctx, `SELECT 1 FROM rooms WHERE id = ? LIMIT 1`, roomID.String()).Scan(&exists)
+	if err == sql.ErrNoRows {
+		return ports.ErrRoomNotFound
+	}
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx, `
+		INSERT INTO room_tokens (room_id, token, created_at)
+		VALUES (?, ?, CAST(strftime('%s','now') AS INTEGER))
+	`, roomID.String(), token)
+	if err != nil {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			if err := tx.Commit(); err != nil {
+				return err
+			}
+			return nil
+		}
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *SqliteRepo) AddFileByToken(ctx context.Context, roomID uuid.UUID, token string, file *domain.RoomFile) (bool, error) {
 	if err := ctx.Err(); err != nil {
 		return false, err
 	}
+	if file == nil {
+		return false, domain.ErrInvalidFile
+	}
 
-	panic("TODO")
+	roomIDString := roomID.String()
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	var exists int
+	err = tx.QueryRowContext(ctx, `SELECT 1 FROM rooms WHERE id = ? LIMIT 1`, roomIDString).Scan(&exists)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	err = tx.QueryRowContext(ctx, `
+		SELECT 1
+		FROM room_tokens
+		WHERE room_id = ? AND token = ?
+		LIMIT 1
+	`, roomIDString, token).Scan(&exists)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	_, err = tx.ExecContext(ctx, `
+		INSERT INTO room_files (id, room_id, path, name, size, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`, file.ID.String(), roomIDString, file.Path, file.Name, file.Size, file.CreatedAt.Unix())
+	if err != nil {
+		return false, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *SqliteRepo) DeleteFileByToken(ctx context.Context, roomID, fileID uuid.UUID, token string) (string, bool, error) {
@@ -405,5 +643,67 @@ func (r *SqliteRepo) DeleteFileByToken(ctx context.Context, roomID, fileID uuid.
 		return "", false, err
 	}
 
-	panic("TODO")
+	roomIDString := roomID.String()
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return "", false, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	var exists int
+	err = tx.QueryRowContext(ctx, `SELECT 1 FROM rooms WHERE id = ? LIMIT 1`, roomIDString).Scan(&exists)
+	if err == sql.ErrNoRows {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, err
+	}
+
+	err = tx.QueryRowContext(ctx, `
+		SELECT 1
+		FROM room_tokens
+		WHERE room_id = ? AND token = ?
+		LIMIT 1
+	`, roomIDString, token).Scan(&exists)
+	if err == sql.ErrNoRows {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, err
+	}
+
+	var path string
+	err = tx.QueryRowContext(ctx, `
+		SELECT path
+		FROM room_files
+		WHERE room_id = ? AND id = ?
+		LIMIT 1
+	`, roomIDString, fileID.String()).Scan(&path)
+	if err == sql.ErrNoRows {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, err
+	}
+
+	res, err := tx.ExecContext(ctx, `
+		DELETE FROM room_files
+		WHERE room_id = ? AND id = ?
+	`, roomIDString, fileID.String())
+	if err != nil {
+		return "", false, err
+	}
+	aff, err := res.RowsAffected()
+	if err != nil {
+		return "", false, err
+	}
+	if aff == 0 {
+		return "", false, nil
+	}
+
+	if err := tx.Commit(); err != nil {
+		return "", false, err
+	}
+	return path, true, nil
 }
