@@ -64,6 +64,7 @@ const els = {
 }
 
 let suppressRoomsRefresh = false
+let suppressRoomRefresh = false
 
 const router = useRouter()
 const toast = useToast(els.toast)
@@ -240,6 +241,7 @@ function wireEvents() {
     })
 
     els.deleteRoomBtn().addEventListener('click', async () => {
+        suppressRoomRefresh = true
         try {
             const id = router.getRoomId()
             if (!id) throw Error('Unable to get room ID')
@@ -250,6 +252,8 @@ function wireEvents() {
             }
         } catch (error) {
             toast.show(error, 'error')
+        } finally {
+            suppressRoomRefresh = false
         }
     })
 
@@ -334,7 +338,20 @@ function wireEvents() {
     sse.onMessage(async e => console.info(e.data))
     sse.onEvent("RoomsChange", async e => {
         if (suppressRoomsRefresh) return
-        if (router.getLocation() !== '/') return
+        if (router.getLocation() !== '/') {
+            if (suppressRoomRefresh) return
+            const roomId = router.getRoomId()
+            if (!roomId) {
+                return
+            }
+            try {
+                await rooms.getById(roomId)
+            } catch (error) {
+                router.navigate('/')
+                toast.show("The room has been deleted ", 'error')
+            }
+            return
+        }
         roomDataTable.loadData(await rooms.get())
     })
     sse.onEvent("Message", e => toast.show(e.data, 'success'))
