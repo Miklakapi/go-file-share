@@ -55,7 +55,6 @@ func (r *RoomCleanupJob) cleanup(ctx context.Context, close chan struct{}, durat
 			// 	// Error ?
 			// 	return
 			// }
-			return
 		case <-close:
 			return
 
