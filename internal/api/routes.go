@@ -19,12 +19,14 @@ type ControllerBag struct {
 }
 
 func RegisterRoutes(router *gin.Engine, cB *ControllerBag) {
-	router.GET("/", cB.HtmlController.Index)
-	router.Static("/assets", cB.HtmlController.Assets())
-	router.StaticFile("/favicon.ico", cB.HtmlController.Favicon())
-	router.NoRoute(cB.HtmlController.SPAFallback)
+	securedRouter := router.Group("", middleware.SecureHeaders)
 
-	api := router.Group("/api/v1", cB.ErrorMiddleware)
+	securedRouter.GET("/", cB.HtmlController.Index)
+	securedRouter.Static("/assets", cB.HtmlController.Assets())
+	securedRouter.StaticFile("/favicon.ico", cB.HtmlController.Favicon())
+	router.NoRoute(middleware.SecureHeaders, cB.HtmlController.SPAFallback)
+
+	api := securedRouter.Group("/api/v1", cB.ErrorMiddleware)
 	api.GET("/ping", cB.HealthController.Ping)
 	api.GET("/health", cB.HealthController.Health)
 	api.GET("/sse", cB.SSEController.SSE)
