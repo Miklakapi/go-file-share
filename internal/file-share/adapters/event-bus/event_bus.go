@@ -89,6 +89,7 @@ func trySend(ch chan ports.Event, event ports.Event) (sent bool) {
 		return false
 	}
 }
+
 func tryDrainOne(ch chan ports.Event) (drained bool) {
 	defer func() {
 		_ = recover()

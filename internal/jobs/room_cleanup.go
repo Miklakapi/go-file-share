@@ -2,11 +2,14 @@ package jobs
 
 import (
 	"context"
+	"log"
+	"strings"
 	"sync"
 	"time"
 
 	fileShare "github.com/Miklakapi/go-file-share/internal/file-share/application"
 	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
+	"github.com/google/uuid"
 )
 
 type RoomCleanupJob struct {
@@ -45,16 +48,20 @@ func (r *RoomCleanupJob) cleanup(ctx context.Context, close chan struct{}, durat
 	for {
 		select {
 		case <-cleanupTicker.C:
-			// deletedRooms, err := r.fileShareService.CleanupExpired(ctx)
-			// if err != nil {
-			// 	// Error ?
-			// 	return
-			// }
+			deletedRooms, err := r.fileShareService.CleanupExpired(ctx)
+			if err != nil {
+				log.Printf("file error: %v\n", err)
+				continue
+			}
+			if len(deletedRooms) == 0 {
+				continue
+			}
 
-			// if err := r.eventPublisher.Publish(ports.Event{Name: ports.EventRoomDelete, Data: deletedRooms}); err != nil {
-			// 	// Error ?
-			// 	return
-			// }
+			deletedRoomsString := uuidsToString(deletedRooms)
+			if err := r.eventPublisher.Publish(ports.Event{Name: ports.EventRoomDelete, Data: deletedRoomsString}); err != nil {
+				log.Printf("file error: %v\n", err)
+				continue
+			}
 		case <-close:
 			return
 
@@ -62,4 +69,15 @@ func (r *RoomCleanupJob) cleanup(ctx context.Context, close chan struct{}, durat
 			return
 		}
 	}
+}
+
+func uuidsToString(uuids []uuid.UUID) string {
+	var b strings.Builder
+	for i, u := range uuids {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		b.WriteString(u.String())
+	}
+	return b.String()
 }
