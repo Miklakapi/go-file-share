@@ -707,3 +707,12 @@ func (r *SqliteRepo) DeleteFileByToken(ctx context.Context, roomID, fileID uuid.
 	}
 	return path, true, nil
 }
+
+func (r *SqliteRepo) WipeAll(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	_, err := r.db.ExecContext(ctx, `DELETE FROM rooms`)
+	return err
+}

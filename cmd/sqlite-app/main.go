@@ -63,6 +63,9 @@ func main() {
 	fileShareService := fileShare.NewService(roomRepo, fileStore, hasher, tokenService, fileShareSettings)
 	roomCleanupJob := jobs.New(fileShareService, eventBus, config.CleanupInterval)
 
+	if err := roomRepo.WipeAll(appCtx); err != nil {
+		log.Fatalf("file error: %v", err)
+	}
 	if err := fileStore.ClearAll(appCtx, config.UploadDir); err != nil {
 		log.Fatalf("file error: %v", err)
 	}
