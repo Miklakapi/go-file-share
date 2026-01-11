@@ -274,11 +274,14 @@ function wireEvents() {
                 toast.show(failed[0].reason, 'error')
             } else {
                 toast.show('Upload completed', 'success')
-                filesDataTable.loadData(await files.get(id))
             }
 
             input.value = ''
             els.fileName().textContent = 'No file selected'
+
+            if (failed.length !== results.length) {
+                filesDataTable.loadData(await files.get(id))
+            }
         } catch (error) {
             toast.show(error, 'error')
         } finally {
