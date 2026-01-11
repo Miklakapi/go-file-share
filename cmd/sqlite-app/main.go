@@ -21,6 +21,7 @@ import (
 	"github.com/Miklakapi/go-file-share/internal/file-share/adapters/security"
 	fileShare "github.com/Miklakapi/go-file-share/internal/file-share/application"
 	fileShareDomain "github.com/Miklakapi/go-file-share/internal/file-share/domain"
+	"github.com/Miklakapi/go-file-share/internal/jobs"
 	"github.com/gin-gonic/gin"
 )
 
@@ -60,10 +61,17 @@ func main() {
 		config.UploadDir,
 	)
 	fileShareService := fileShare.NewService(roomRepo, fileStore, hasher, tokenService, fileShareSettings)
+	roomCleanupJob := jobs.New(fileShareService, eventBus, config.CleanupInterval)
 
 	if err := fileStore.ClearAll(appCtx, config.UploadDir); err != nil {
 		log.Fatalf("file error: %v", err)
 	}
+
+	closeJob, err := roomCleanupJob.Run(appCtx)
+	if err != nil {
+		log.Fatalf("file error: %v", err)
+	}
+	defer closeJob()
 
 	engine := gin.New()
 	engine.Use(gin.Logger(), gin.Recovery())
