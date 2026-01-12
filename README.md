@@ -94,7 +94,7 @@ Project is created with:
     ```
 2. Run the application:
     ```
-    go run main.go
+    go run ./cmd/sqlite-app/main.go
     ```
 3. Server starts on:
     ```
