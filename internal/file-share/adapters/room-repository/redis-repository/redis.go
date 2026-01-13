@@ -6,15 +6,16 @@ import (
 
 	"github.com/Miklakapi/go-file-share/internal/file-share/domain"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 type RedisRepo struct {
-	rooms map[uuid.UUID]*domain.Room
+	db *redis.Client
 }
 
-func New() *RedisRepo {
+func New(db *redis.Client) *RedisRepo {
 	return &RedisRepo{
-		rooms: make(map[uuid.UUID]*domain.Room),
+		db: db,
 	}
 }
 

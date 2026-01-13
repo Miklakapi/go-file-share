@@ -40,7 +40,7 @@ func main() {
 	}
 	defer redisDb.Conn.Close()
 
-	roomRepo := redisrepository.New()
+	roomRepo := redisrepository.New(redisDb.Conn)
 	eventBus := eventbus.New()
 	directTransfer := directtransfer.New()
 	fileStore := filestore.DiskStore{}
