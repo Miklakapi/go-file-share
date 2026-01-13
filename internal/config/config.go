@@ -26,6 +26,7 @@ type Config struct {
 	CleanupInterval  time.Duration
 
 	SqlitePath string
+	RedisPath  string
 
 	JWTSecret []byte
 }
@@ -94,6 +95,7 @@ func Load() (Config, error) {
 	}
 
 	cfg.SqlitePath = getEnv("SQLITE_PATH", "./sqlite.db")
+	cfg.RedisPath = getEnv("REDIS_PATH", "127.0.0.1:6379")
 
 	secret := make([]byte, 32)
 	if _, err := rand.Read(secret); err != nil {

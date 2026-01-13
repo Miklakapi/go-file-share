@@ -13,6 +13,7 @@ import (
 	"github.com/Miklakapi/go-file-share/internal/api/controllers"
 	"github.com/Miklakapi/go-file-share/internal/api/middleware"
 	"github.com/Miklakapi/go-file-share/internal/config"
+	"github.com/Miklakapi/go-file-share/internal/file-share/adapters/db"
 	directtransfer "github.com/Miklakapi/go-file-share/internal/file-share/adapters/direct-transfer"
 	eventbus "github.com/Miklakapi/go-file-share/internal/file-share/adapters/event-bus"
 	filestore "github.com/Miklakapi/go-file-share/internal/file-share/adapters/file-store"
@@ -32,6 +33,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	redisDb, err := db.NewRedis(config.RedisPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer redisDb.Conn.Close()
 
 	roomRepo := redisrepository.New()
 	eventBus := eventbus.New()
