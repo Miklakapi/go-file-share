@@ -15,8 +15,6 @@ type MemoryRepo struct {
 	rooms map[uuid.UUID]*domain.Room
 }
 
-var _ ports.RoomRepository = (*MemoryRepo)(nil)
-
 func New() *MemoryRepo {
 	return &MemoryRepo{
 		rooms: make(map[uuid.UUID]*domain.Room),

@@ -12,8 +12,6 @@ import (
 
 type DiskStore struct{}
 
-var _ ports.FileStore = (*DiskStore)(nil)
-
 func (DiskStore) ClearAll(ctx context.Context, uploadDir string) error {
 	if err := ctx.Err(); err != nil {
 		return err

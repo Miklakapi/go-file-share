@@ -16,8 +16,6 @@ type JwtService struct {
 	now    func() time.Time
 }
 
-var _ ports.TokenService = (*JwtService)(nil)
-
 func NewJwtService(secret []byte) *JwtService {
 	return &JwtService{secret: secret, now: time.Now}
 }

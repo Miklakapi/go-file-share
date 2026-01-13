@@ -3,15 +3,12 @@ package security
 import (
 	"context"
 
-	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type BcryptHasher struct {
 	Cost int
 }
-
-var _ ports.PasswordHasher = (*BcryptHasher)(nil)
 
 func (h BcryptHasher) Hash(ctx context.Context, plain string) (string, error) {
 	if err := ctx.Err(); err != nil {

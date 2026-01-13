@@ -19,8 +19,6 @@ type SqliteRepo struct {
 	inLimit int
 }
 
-var _ ports.RoomRepository = (*SqliteRepo)(nil)
-
 func New(ctx context.Context, db *sql.DB) *SqliteRepo {
 	r := &SqliteRepo{
 		db:      db,

@@ -51,8 +51,6 @@ type DirectTransfer struct {
 	connections map[string]*connection
 }
 
-var _ ports.DirectTransfer = (*DirectTransfer)(nil)
-
 func New() *DirectTransfer {
 	return &DirectTransfer{
 		connections: make(map[string]*connection, 5),

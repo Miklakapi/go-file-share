@@ -5,15 +5,12 @@ import (
 	"time"
 
 	"github.com/Miklakapi/go-file-share/internal/file-share/domain"
-	"github.com/Miklakapi/go-file-share/internal/file-share/ports"
 	"github.com/google/uuid"
 )
 
 type RedisRepo struct {
 	rooms map[uuid.UUID]*domain.Room
 }
-
-var _ ports.RoomRepository = (*RedisRepo)(nil)
 
 func New() *RedisRepo {
 	return &RedisRepo{
