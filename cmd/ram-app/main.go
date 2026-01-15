@@ -75,6 +75,7 @@ func main() {
 	}
 	defer closeJob()
 
+	gin.SetMode(config.Mode)
 	engine := gin.New()
 	engine.Use(gin.Logger(), gin.Recovery())
 
