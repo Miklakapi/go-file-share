@@ -4,7 +4,7 @@
 ![linux](https://img.shields.io/badge/os-Linux-green)
 ![language](https://img.shields.io/badge/language-Go_1.25.1-blue)
 ![version](https://img.shields.io/badge/version-1.0.0-success)
-![status](https://img.shields.io/badge/status-development-blue)
+![status](https://img.shields.io/badge/status-production-green)
 
 An overengineered real-time file sharing server written in Go.  
 The project allows temporary file exchange between devices using password-protected rooms, direct streaming, and Server-Sent Events (SSE).
@@ -41,6 +41,10 @@ The frontend is written in **plain JavaScript**, without any frameworks, and com
 > **Important:**  
 > All files and database data are **intentionally wiped on every application startup**.  
 > This is a conscious design decision. Each restart returns the system to a **clean, zero-state**.
+
+<img width="50%" src="https://github.com/Miklakapi/go-file-share/blob/master/README_IMAGES/room_list.png"> 
+<img width="50%" src="https://github.com/Miklakapi/go-file-share/blob/master/README_IMAGES/room.png"> 
+<img width="50%" src="https://github.com/Miklakapi/go-file-share/blob/master/README_IMAGES/dorect_transfer.png">
 
 ## Architecture
 
@@ -127,10 +131,4 @@ http://localhost:8080
 
 ## Status
 
-The project is in active development.
-
-Planned features:
-
--   Redis repository adapter
--   File-based event logging
--   Further cleanup and architectural refinements
+The project's development has been completed.
