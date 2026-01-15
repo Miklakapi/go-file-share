@@ -43,8 +43,8 @@ The frontend is written in **plain JavaScript**, without any frameworks, and com
 > This is a conscious design decision. Each restart returns the system to a **clean, zero-state**.
 
 <p align="center" width="100%">
-    <img width="49%" src="https://github.com/Miklakapi/go-file-share/blob/master/README_IMAGES/room_list.png"> 
-    <img width="49%" src="https://github.com/Miklakapi/go-file-share/blob/master/README_IMAGES/room.png"> 
+    <img width="100%" src="https://github.com/Miklakapi/go-file-share/blob/master/README_IMAGES/room_list.png"> 
+    <img width="100%" src="https://github.com/Miklakapi/go-file-share/blob/master/README_IMAGES/room.png"> 
     <img width="50%" src="https://github.com/Miklakapi/go-file-share/blob/master/README_IMAGES/direct_transfer.png">
 </p>
 
