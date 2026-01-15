@@ -44,7 +44,7 @@ The frontend is written in **plain JavaScript**, without any frameworks, and com
 
 <img width="50%" src="https://github.com/Miklakapi/go-file-share/blob/master/README_IMAGES/room_list.png"> 
 <img width="50%" src="https://github.com/Miklakapi/go-file-share/blob/master/README_IMAGES/room.png"> 
-<img width="50%" src="https://github.com/Miklakapi/go-file-share/blob/master/README_IMAGES/dorect_transfer.png">
+<img width="50%" src="https://github.com/Miklakapi/go-file-share/blob/master/README_IMAGES/direct_transfer.png">
 
 ## Architecture
 
